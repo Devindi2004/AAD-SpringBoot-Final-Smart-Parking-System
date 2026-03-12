@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkSmart — Driver Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/Style.css">
+    <style>
+        .gear-wrapper { position: relative; }
+        .gear-dropdown {
+            display: none; position: absolute; top: calc(100% + 8px); right: 0;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 12px; min-width: 160px; padding: 6px; z-index: 100;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .gear-dropdown.open { display: block; }
+        .gear-dropdown-item {
+            display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+            border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted);
+            transition: background 0.15s;
+        }
+        .gear-dropdown-item:hover { background: var(--surface3); color: var(--text); }
+        .gear-dropdown-item.danger { color: var(--danger); }
+        .gear-dropdown-item.danger:hover { background: rgba(255,71,87,0.1); color: var(--danger); }
+
+        /* Booking modal */
+        #booking-modal {
+            display:none; position:fixed; inset:0; z-index:1000;
+            background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
+            align-items:center; justify-content:center;
+        }
+        #booking-modal.open { display:flex; }
+        #booking-modal .modal-card {
+            background:var(--surface); border:1px solid var(--border); border-radius:20px;
+            padding:28px; width:100%; max-width:440px; box-shadow:0 24px 80px rgba(0,0,0,0.5);
+            animation: modal-in 0.2s ease;
+        }
+        @keyframes modal-in { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+        .modal-title { font-family:'Syne',sans-serif; font-weight:700; font-size:17px; margin-bottom:4px; }
+        .price-display { background:var(--surface2); border-radius:12px; padding:14px 16px; margin:16px 0; }
+        .price-row { display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:6px; }
+        .price-total { display:flex; justify-content:space-between; font-size:14px; font-weight:700; padding-top:8px; border-top:1px solid var(--border); margin-top:4px; }
+
+        /* Location detail panel */
+        #location-detail-panel { display:flex; flex-direction:column; }
+        #location-detail-panel .card-body { flex:1; overflow-y:auto; }
+        .slot-item {
+            background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+            padding:12px 14px; display:flex; align-items:center; justify-content:space-between;
+            margin-bottom:8px;
+        }
+        .slot-item:last-child { margin-bottom:0; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">🅿</div>
+            <div class="logo-text">Park<span>Smart</span></div>
+        </div>
+
+        <div class="nav-section" id="nav-driver">
+            <div class="role-label">Driver</div>
+            <button class="nav-item active" onclick="showView('driver-dashboard', this)">
+                <span class="nav-icon">⊞</span> Dashboard
+            </button>
+            <button class="nav-item" onclick="showView('driver-map', this)">
+                <span class="nav-icon">🗺</span> Find Parking
+            </button>
+            <button class="nav-item" onclick="showView('driver-vehicles', this)">
+                <span class="nav-icon">🚗</span> My Vehicles
+            </button>
+            <button class="nav-item" onclick="showView('driver-bookings', this)">
+                <span class="nav-icon">📋</span> Bookings
+                <span class="badge">2</span>
+            </button>
+            <button class="nav-item" onclick="showView('driver-qr', this)">
+                <span class="nav-icon">⬛</span> My QR Code
+            </button>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="avatar" id="sidebar-avatar">?</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebar-name">—</div>
+                    <div class="user-role" id="sidebar-role">—</div>
+                </div>
+                <div class="online-dot"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <div class="topbar-title" id="topbar-title">Driver Dashboard</div>
+                <div class="topbar-subtitle" id="topbar-date"></div>
+            </div>
+            <div class="topbar-right">
+                <div class="icon-btn" id="theme-toggle-btn" title="Toggle day/night mode">🌙</div>
+                <div class="gear-wrapper">
+                    <div class="icon-btn" id="gear-btn">⚙</div>
+                    <div class="gear-dropdown" id="gear-dropdown">
+                        <div class="gear-dropdown-item danger" onclick="logout()">⏻ Logout</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+
+            <!-- ========== DRIVER DASHBOARD ========== -->
+            <div id="driver-dashboard" class="view active">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-label">Active Bookings</div>
+                        <div class="stat-value">2</div>
+                        <div class="stat-change"><span class="up">↑ 1</span> from last week</div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-icon">🚗</div>
+                        <div class="stat-label">Registered Vehicles</div>
+                        <div class="stat-value">3</div>
+                        <div class="stat-change">2 Cars, 1 Bike</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon">⏱</div>
+                        <div class="stat-label">Total Hours Parked</div>
+                        <div class="stat-value">47h</div>
+                        <div class="stat-change"><span class="up">↑ 12%</span> this month</div>
+                    </div>
+                    <div class="stat-card red">
+                        <div class="stat-icon">💸</div>
+                        <div class="stat-label">Amount Spent</div>
+                        <div class="stat-value">4,250</div>
+                        <div class="stat-change">LKR this month</div>
+                    </div>
+                </div>
+
+                <div class="grid-3">
+                    <div class="card">
+                        <div class="card-header">
+                            <span>🗺</span>
+                            <span class="card-title">Nearby Parking</span>
+                            <span class="card-subtitle" style="cursor:pointer;color:var(--accent)" onclick="showView('driver-map', null)">View Full Map →</span>
+                        </div>
+                        <div id="nearby-map" style="width:100%;height:300px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:var(--surface2);"></div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <div class="card">
+                            <div class="card-header"><span>📋</span><span class="card-title">Active Booking</span></div>
+                            <div class="qr-card">
+                                <div class="qr-wrapper">
+                                    <div class="qr-corners"></div>
+                                    <svg class="qr-code-svg" viewBox="0 0 100 100">
+                                        <rect fill="#fff" width="100" height="100"/>
+                                        <rect fill="#000" x="5" y="5" width="25" height="25"/>
+                                        <rect fill="#fff" x="8" y="8" width="19" height="19"/>
+                                        <rect fill="#000" x="11" y="11" width="13" height="13"/>
+                                        <rect fill="#000" x="70" y="5" width="25" height="25"/>
+                                        <rect fill="#fff" x="73" y="8" width="19" height="19"/>
+                                        <rect fill="#000" x="76" y="11" width="13" height="13"/>
+                                        <rect fill="#000" x="5" y="70" width="25" height="25"/>
+                                        <rect fill="#fff" x="8" y="73" width="19" height="19"/>
+                                        <rect fill="#000" x="11" y="76" width="13" height="13"/>
+                                        <rect fill="#000" x="35" y="5" width="5" height="5"/>
+                                        <rect fill="#000" x="45" y="5" width="5" height="5"/>
+                                        <rect fill="#000" x="55" y="5" width="5" height="5"/>
+                                        <rect fill="#000" x="35" y="15" width="5" height="5"/>
+                                        <rect fill="#000" x="50" y="15" width="5" height="5"/>
+                                        <rect fill="#000" x="60" y="15" width="5" height="5"/>
+                                        <rect fill="#000" x="35" y="35" width="5" height="5"/>
+                                        <rect fill="#000" x="45" y="35" width="5" height="5"/>
+                                        <rect fill="#000" x="55" y="35" width="5" height="5"/>
+                                        <rect fill="#000" x="65" y="35" width="5" height="5"/>
+                                        <rect fill="#000" x="35" y="45" width="5" height="5"/>
+                                        <rect fill="#000" x="50" y="45" width="5" height="5"/>
+                                        <rect fill="#000" x="70" y="45" width="5" height="5"/>
+                                        <rect fill="#000" x="80" y="45" width="5" height="5"/>
+                                        <rect fill="#000" x="90" y="45" width="5" height="5"/>
+                                        <rect fill="#000" x="35" y="55" width="5" height="5"/>
+                                        <rect fill="#000" x="45" y="55" width="5" height="5"/>
+                                        <rect fill="#000" x="60" y="55" width="5" height="5"/>
+                                        <rect fill="#000" x="35" y="65" width="5" height="5"/>
+                                        <rect fill="#000" x="55" y="65" width="5" height="5"/>
+                                        <rect fill="#000" x="70" y="65" width="5" height="5"/>
+                                        <rect fill="#000" x="80" y="65" width="5" height="5"/>
+                                        <rect fill="#000" x="45" y="75" width="5" height="5"/>
+                                        <rect fill="#000" x="55" y="75" width="5" height="5"/>
+                                        <rect fill="#000" x="75" y="75" width="5" height="5"/>
+                                        <rect fill="#000" x="90" y="75" width="5" height="5"/>
+                                        <rect fill="#000" x="35" y="85" width="5" height="5"/>
+                                        <rect fill="#000" x="50" y="85" width="5" height="5"/>
+                                        <rect fill="#000" x="65" y="85" width="5" height="5"/>
+                                        <rect fill="#000" x="85" y="85" width="5" height="5"/>
+                                    </svg>
+                                </div>
+                                <div class="qr-id">BOOKING #PS-2024-0381</div>
+                                <div class="qr-booking">Slot A-14, Majestic City Parking</div>
+                                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">14:00 – 17:00 · CBC1234 · Blue Toyota</div>
+                                <div style="margin-top:12px;">
+                                    <span class="status-pill status-active">● Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><span>📅</span><span class="card-title">Recent Bookings</span></div>
+                    <div class="card-body">
+                        <div class="booking-item" style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);">
+                            <div style="width:36px;height:36px;background:rgba(0,229,160,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">🅿</div>
+                            <div style="flex:1">
+                                <div style="font-size:13px;font-weight:600;">Majestic City Parking · Slot A-14</div>
+                                <div style="font-size:11px;color:var(--text-muted);">Mar 06, 2026 · 14:00 – 17:00 · CBC1234 · 3h</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'DM Mono',monospace">300 LKR</div>
+                                <span class="status-pill status-active">Active</span>
+                            </div>
+                        </div>
+                        <div class="booking-item" style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);">
+                            <div style="width:36px;height:36px;background:rgba(255,176,32,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">🅿</div>
+                            <div style="flex:1">
+                                <div style="font-size:13px;font-weight:600;">One Galle Face · Slot B-02</div>
+                                <div style="font-size:11px;color:var(--text-muted);">Mar 05, 2026 · 10:00 – 12:00 · WP 7823 · 2h</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'DM Mono',monospace">100 LKR</div>
+                                <span class="status-pill status-pending">Pending</span>
+                            </div>
+                        </div>
+                        <div class="booking-item" style="display:flex;align-items:center;gap:14px;padding:10px 0;">
+                            <div style="width:36px;height:36px;background:rgba(108,99,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">🅿</div>
+                            <div style="flex:1">
+                                <div style="font-size:13px;font-weight:600;">Liberty Plaza · Slot C-08</div>
+                                <div style="font-size:11px;color:var(--text-muted);">Mar 03, 2026 · 09:00 – 14:00 · CBC1234 · 5h</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'DM Mono',monospace">450 LKR</div>
+                                <span class="status-pill status-completed">Completed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== DRIVER MAP ========== -->
+            <div id="driver-map" class="view">
+                <div class="card" style="margin-bottom:16px;">
+                    <div class="card-body" style="padding:12px 20px;">
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <div class="form-control" style="width:auto;flex:1;min-width:200px">📍 Colombo 03, Western Province</div>
+                            <select class="form-control" style="width:150px"><option>All Types</option><option>Car</option><option>Bike</option><option>Van</option></select>
+                            <select class="form-control" style="width:140px"><option>Any Price</option><option>Under 100 LKR/h</option><option>100-200 LKR/h</option><option>200+ LKR/h</option></select>
+                            <button class="btn btn-primary">🔍 Search</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 360px;gap:16px;height:540px;">
+                    <div class="card" style="overflow:hidden;padding:0;">
+                        <div id="full-map" style="width:100%;height:100%;"></div>
+                    </div>
+                    <div class="card" id="location-detail-panel" style="overflow:hidden;display:flex;flex-direction:column;">
+                        <div class="card-header"><span>📍</span><span class="card-title">Select a Location</span></div>
+                        <div class="card-body" style="flex:1;overflow-y:auto;display:flex;align-items:center;justify-content:center;">
+                            <div style="text-align:center;color:var(--text-muted);">
+                                <div style="font-size:40px;margin-bottom:12px;">🗺</div>
+                                <div style="font-size:13px;">Click on a parking pin on the map<br>to see available slots</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== DRIVER VEHICLES ========== -->
+            <div id="driver-vehicles" class="view">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <div>
+                        <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">My Vehicles</div>
+                        <div style="font-size:12px;color:var(--text-muted);">Manage your registered vehicles</div>
+                    </div>
+                    <button class="btn btn-primary">+ Add Vehicle</button>
+                </div>
+                <div class="vehicle-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+                    <div class="vehicle-card">
+                        <div class="vehicle-check">✓</div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div class="vehicle-type-icon">🚗</div>
+                            <span class="status-pill status-active" style="font-size:10px;padding:3px 8px;">Car</span>
+                        </div>
+                        <div class="vehicle-number">CBC 1234</div>
+                        <div style="font-size:13px;font-weight:600;margin:4px 0;">Toyota Aqua</div>
+                        <div class="vehicle-detail">Blue · 2019</div>
+                        <div style="display:flex;gap:6px;margin-top:12px;">
+                            <button class="btn btn-ghost btn-sm" style="flex:1">Edit</button>
+                            <button class="btn btn-danger btn-sm" style="flex:1">Delete</button>
+                        </div>
+                    </div>
+                    <div class="vehicle-card">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div class="vehicle-type-icon">🏍</div>
+                            <span class="status-pill status-active" style="font-size:10px;padding:3px 8px;">Bike</span>
+                        </div>
+                        <div class="vehicle-number">WP 7823</div>
+                        <div style="font-size:13px;font-weight:600;margin:4px 0;">Honda CB150R</div>
+                        <div class="vehicle-detail">Black · 2021</div>
+                        <div style="display:flex;gap:6px;margin-top:12px;">
+                            <button class="btn btn-ghost btn-sm" style="flex:1">Edit</button>
+                            <button class="btn btn-danger btn-sm" style="flex:1">Delete</button>
+                        </div>
+                    </div>
+                    <div class="vehicle-card">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div class="vehicle-type-icon">🚐</div>
+                            <span class="status-pill status-active" style="font-size:10px;padding:3px 8px;">Van</span>
+                        </div>
+                        <div class="vehicle-number">NB 4521</div>
+                        <div style="font-size:13px;font-weight:600;margin:4px 0;">Toyota HiAce</div>
+                        <div class="vehicle-detail">White · 2017</div>
+                        <div style="display:flex;gap:6px;margin-top:12px;">
+                            <button class="btn btn-ghost btn-sm" style="flex:1">Edit</button>
+                            <button class="btn btn-danger btn-sm" style="flex:1">Delete</button>
+                        </div>
+                    </div>
+                    <div class="vehicle-card" style="border-style:dashed;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text-dim);min-height:160px;">
+                        <div style="font-size:32px;">+</div>
+                        <div style="font-size:13px;">Add New Vehicle</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span>🚗</span><span class="card-title">Add New Vehicle</span></div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Vehicle Number *</label>
+                                <input class="form-control" placeholder="e.g. CBC 1234">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Vehicle Type *</label>
+                                <select class="form-control"><option>Car</option><option>Bike</option><option>Van</option><option>Truck</option><option>Three-Wheeler</option></select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Model *</label>
+                                <input class="form-control" placeholder="e.g. Toyota Aqua">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Color</label>
+                                <input class="form-control" placeholder="e.g. Blue">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Year</label>
+                            <input class="form-control" placeholder="e.g. 2021" style="max-width:200px">
+                        </div>
+                        <button class="btn btn-primary">+ Add Vehicle</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== DRIVER BOOKINGS ========== -->
+            <div id="driver-bookings" class="view">
+                <div class="tabs">
+                    <button class="tab-btn active">All</button>
+                    <button class="tab-btn">Active</button>
+                    <button class="tab-btn">Pending</button>
+                    <button class="tab-btn">Completed</button>
+                    <button class="tab-btn">Rejected</button>
+                </div>
+                <div class="card">
+                    <div class="card-body" style="padding:0;">
+                        <table class="slots-table">
+                            <thead>
+                            <tr>
+                                <th>Booking ID</th><th>Location</th><th>Vehicle</th>
+                                <th>Date & Time</th><th>Duration</th><th>Amount</th>
+                                <th>Status</th><th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0381</span></td>
+                                <td>Majestic City · A-14</td><td>CBC 1234</td>
+                                <td style="font-size:12px;">Mar 06 · 14:00–17:00</td>
+                                <td>3h</td><td style="font-family:'DM Mono',monospace;">300 LKR</td>
+                                <td><span class="status-pill status-active">Active</span></td>
+                                <td><button class="btn btn-ghost btn-sm">View QR</button></td>
+                            </tr>
+                            <tr>
+                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0380</span></td>
+                                <td>One Galle Face · B-02</td><td>WP 7823</td>
+                                <td style="font-size:12px;">Mar 05 · 10:00–12:00</td>
+                                <td>2h</td><td style="font-family:'DM Mono',monospace;">100 LKR</td>
+                                <td><span class="status-pill status-pending">Pending</span></td>
+                                <td><button class="btn btn-danger btn-sm">Cancel</button></td>
+                            </tr>
+                            <tr>
+                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0375</span></td>
+                                <td>Liberty Plaza · C-08</td><td>CBC 1234</td>
+                                <td style="font-size:12px;">Mar 03 · 09:00–14:00</td>
+                                <td>5h</td><td style="font-family:'DM Mono',monospace;">450 LKR</td>
+                                <td><span class="status-pill status-completed">Completed</span></td>
+                                <td><button class="btn btn-ghost btn-sm">Receipt</button></td>
+                            </tr>
+                            <tr>
+                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0360</span></td>
+                                <td>Colombo City · D-03</td><td>NB 4521</td>
+                                <td style="font-size:12px;">Feb 28 · 13:00–15:00</td>
+                                <td>2h</td><td style="font-family:'DM Mono',monospace;">200 LKR</td>
+                                <td><span class="status-pill status-rejected">Rejected</span></td>
+                                <td><button class="btn btn-ghost btn-sm">Rebook</button></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== DRIVER QR ========== -->
+            <div id="driver-qr" class="view">
+                <div style="max-width:500px;margin:0 auto;">
+                    <div class="card">
+                        <div class="card-header"><span>⬛</span><span class="card-title">Booking Confirmation</span></div>
+                        <div class="card-body" style="text-align:center;">
+                            <div style="margin-bottom:16px;">
+                                <span class="status-pill status-active" style="font-size:13px;padding:6px 16px;">● Active Booking</span>
+                            </div>
+                            <div class="qr-wrapper" style="width:200px;height:200px;margin:0 auto 20px;">
+                                <div class="qr-corners"></div>
+                                <svg viewBox="0 0 100 100" width="200" height="200">
+                                    <rect fill="#fff" width="100" height="100"/>
+                                    <rect fill="#000" x="5" y="5" width="25" height="25"/>
+                                    <rect fill="#fff" x="8" y="8" width="19" height="19"/>
+                                    <rect fill="#000" x="11" y="11" width="13" height="13"/>
+                                    <rect fill="#000" x="70" y="5" width="25" height="25"/>
+                                    <rect fill="#fff" x="73" y="8" width="19" height="19"/>
+                                    <rect fill="#000" x="76" y="11" width="13" height="13"/>
+                                    <rect fill="#000" x="5" y="70" width="25" height="25"/>
+                                    <rect fill="#fff" x="8" y="73" width="19" height="19"/>
+                                    <rect fill="#000" x="11" y="76" width="13" height="13"/>
+                                    <rect fill="#000" x="35" y="5" width="5" height="5"/><rect fill="#000" x="45" y="5" width="5" height="5"/>
+                                    <rect fill="#000" x="55" y="10" width="5" height="5"/><rect fill="#000" x="35" y="20" width="5" height="5"/>
+                                    <rect fill="#000" x="50" y="20" width="5" height="5"/><rect fill="#000" x="60" y="15" width="5" height="5"/>
+                                    <rect fill="#000" x="35" y="35" width="5" height="5"/><rect fill="#000" x="45" y="35" width="5" height="5"/>
+                                    <rect fill="#000" x="55" y="35" width="5" height="5"/><rect fill="#000" x="65" y="40" width="5" height="5"/>
+                                    <rect fill="#000" x="35" y="50" width="5" height="5"/><rect fill="#000" x="50" y="50" width="5" height="5"/>
+                                    <rect fill="#000" x="70" y="50" width="5" height="5"/><rect fill="#000" x="80" y="45" width="5" height="5"/>
+                                    <rect fill="#000" x="90" y="50" width="5" height="5"/><rect fill="#000" x="40" y="60" width="5" height="5"/>
+                                    <rect fill="#000" x="55" y="60" width="5" height="5"/><rect fill="#000" x="75" y="65" width="5" height="5"/>
+                                    <rect fill="#000" x="35" y="75" width="5" height="5"/><rect fill="#000" x="50" y="80" width="5" height="5"/>
+                                    <rect fill="#000" x="65" y="75" width="5" height="5"/><rect fill="#000" x="85" y="80" width="5" height="5"/>
+                                    <rect fill="#000" x="45" y="90" width="5" height="5"/><rect fill="#000" x="60" y="85" width="5" height="5"/>
+                                    <rect fill="#000" x="80" y="90" width="5" height="5"/>
+                                </svg>
+                            </div>
+                            <div style="background:var(--surface2);border-radius:14px;padding:16px;margin-bottom:16px;text-align:left;">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Booking ID</div><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0381</div></div>
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Slot</div><div style="font-size:13px;font-weight:600;">A-14</div></div>
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Location</div><div style="font-size:13px;font-weight:600;">Majestic City</div></div>
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Vehicle</div><div style="font-size:13px;font-weight:600;">CBC 1234</div></div>
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Date</div><div style="font-size:13px;font-weight:600;">Mar 06, 2026</div></div>
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Time</div><div style="font-size:13px;font-weight:600;">14:00 – 17:00</div></div>
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Duration</div><div style="font-size:13px;font-weight:600;">3 Hours</div></div>
+                                    <div><div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Total Paid</div><div style="font-size:13px;font-weight:700;color:var(--accent)">300 LKR</div></div>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:10px;">
+                                <button class="btn btn-ghost" style="flex:1;">⬇ Download</button>
+                                <button class="btn btn-primary" style="flex:1;">📤 Share</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- Booking Modal -->
+<div id="booking-modal">
+    <div class="modal-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+            <div>
+                <div class="modal-title">📋 Request Parking Slot</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:3px;" id="modal-location-name"></div>
+            </div>
+            <button onclick="closeBookingModal()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;line-height:1;">×</button>
+        </div>
+
+        <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.15);border-radius:12px;padding:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <div style="font-size:12px;color:var(--text-muted);">Slot Number</div>
+                <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:18px;color:var(--accent);" id="modal-slot-number"></div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:12px;color:var(--text-muted);">Rate</div>
+                <div style="font-weight:600;font-size:14px;" id="modal-price-rate"></div>
+            </div>
+        </div>
+
+        <input type="hidden" id="booking-slot-id">
+        <input type="hidden" id="booking-price-rate">
+
+        <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" id="booking-date" oninput="calcBookingPrice()">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Start Time</label>
+                <input type="time" class="form-control" id="booking-start" value="09:00" oninput="calcBookingPrice()">
+            </div>
+            <div class="form-group">
+                <label class="form-label">End Time</label>
+                <input type="time" class="form-control" id="booking-end" value="11:00" oninput="calcBookingPrice()">
+            </div>
+        </div>
+
+        <div class="price-display">
+            <div class="price-row"><span>Duration</span><span id="modal-duration">—</span></div>
+            <div class="price-row"><span>Rate</span><span id="modal-rate-display">—</span></div>
+            <div class="price-total"><span>Total</span><span style="color:var(--accent);" id="modal-price-total">—</span></div>
+        </div>
+
+        <div id="booking-error" style="display:none;color:var(--danger);font-size:12px;margin-bottom:12px;padding:10px 12px;background:rgba(255,71,87,0.08);border-radius:8px;border:1px solid rgba(255,71,87,0.2);"></div>
+
+        <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="btn btn-ghost" style="flex:1;" onclick="closeBookingModal()">Cancel</button>
+            <button class="btn btn-primary" style="flex:1;" onclick="submitBooking()">📋 Submit Request</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/script.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/api/api.config.js"></script>
+<script src="../js/api/auth.api.js"></script>
+<script src="../js/api/location.api.js"></script>
+<script src="../js/api/slot.api.js"></script>
+<script>
+    (function () {
+        const user = getCurrentUser();
+        if (!user) { window.location.href = '/index.html'; return; }
+        const initials = ((user.firstName || '')[0] || '') + ((user.lastName || '')[0] || '');
+        document.getElementById('sidebar-avatar').textContent = initials.toUpperCase() || '?';
+        document.getElementById('sidebar-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
+        const roleLabels = { DRIVER: 'Driver', OWNER: 'Parking Owner', ADMIN: 'System Administrator' };
+        document.getElementById('sidebar-role').textContent = roleLabels[user.role] || user.role;
+    })();
+
+    document.getElementById('topbar-date').textContent =
+        new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: '2-digit' });
+
+    // ── Dark map style ─────────────────────────────────────────────────────────
+    const DARK_MAP_STYLES = [
+        { elementType: 'geometry',            stylers: [{ color: '#1c2230' }] },
+        { elementType: 'labels.text.stroke',  stylers: [{ color: '#1c2230' }] },
+        { elementType: 'labels.text.fill',    stylers: [{ color: '#8b949e' }] },
+        { featureType: 'road',       elementType: 'geometry',        stylers: [{ color: '#212840' }] },
+        { featureType: 'road',       elementType: 'geometry.stroke', stylers: [{ color: '#161b22' }] },
+        { featureType: 'road',       elementType: 'labels.text.fill',stylers: [{ color: '#6e7681' }] },
+        { featureType: 'water',      elementType: 'geometry',        stylers: [{ color: '#0d1117' }] },
+        { featureType: 'poi',        elementType: 'geometry',        stylers: [{ color: '#1c2230' }] },
+        { featureType: 'poi',        elementType: 'labels',          stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit',    elementType: 'geometry',        stylers: [{ color: '#1c2230' }] },
+        { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#212840' }] },
+    ];
+
+    // ── Map state ──────────────────────────────────────────────────────────────
+    let nearbyMap = null, fullMap = null;
+    let allLocations = [], selectedLocation = null;
+
+    // ── Theme toggle ───────────────────────────────────────────────────────────
+    (function () {
+        const btn = document.getElementById('theme-toggle-btn');
+        function applyTheme(light) {
+            document.body.classList.toggle('light', light);
+            btn.textContent = light ? '🌙' : '☀️';
+            btn.title = light ? 'Switch to night mode' : 'Switch to day mode';
+            const styles = light ? [] : DARK_MAP_STYLES;
+            if (nearbyMap) nearbyMap.setOptions({ styles });
+            if (fullMap)   fullMap.setOptions({ styles });
+        }
+        applyTheme(localStorage.getItem('theme') === 'light');
+        btn.addEventListener('click', function () {
+            const isLight = !document.body.classList.contains('light');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            applyTheme(isLight);
+        });
+    })();
+
+    document.getElementById('gear-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.getElementById('gear-dropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', function () {
+        document.getElementById('gear-dropdown').classList.remove('open');
+    });
+
+    // ── Google Maps loader ─────────────────────────────────────────────────────
+    window.initDriverMap = function () { /* stub — maps init lazily */ };
+    (function () {
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&callback=initDriverMap&loading=async`;
+        s.async = true; s.defer = true;
+        document.head.appendChild(s);
+    })();
+
+    let userPosition = null;   // saved for lazy fullMap init
+
+    function mapStyles() {
+        return document.body.classList.contains('light') ? [] : DARK_MAP_STYLES;
+    }
+
+    function baseMapOptions(center) {
+        return {
+            center: center || { lat: 6.9271, lng: 79.8612 }, zoom: 13, styles: mapStyles(),
+            mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+        };
+    }
+
+    let userDotNearby = null, userDotFull = null;
+    let userCircleNearby = null, userCircleFull = null;
+
+    function placeUserDot(map, position, accuracy) {
+        const icon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            fillColor: '#4285F4', fillOpacity: 1,
+            strokeColor: '#ffffff', strokeWeight: 3, scale: 10,
+        };
+        const marker = new google.maps.Marker({ position, map, title: 'Your Location', icon, zIndex: 999 });
+        const circle = new google.maps.Circle({
+            map, center: position,
+            radius: accuracy || 50,
+            fillColor: '#4285F4', fillOpacity: 0.12,
+            strokeColor: '#4285F4', strokeOpacity: 0.4, strokeWeight: 1,
+        });
+        return { marker, circle };
+    }
+
+    function addLocateMeButton(map) {
+        const btn = document.createElement('button');
+        btn.title = 'My Location';
+        btn.style.cssText = `
+            margin:10px;background:#fff;border:none;border-radius:4px;
+            width:40px;height:40px;cursor:pointer;font-size:20px;
+            box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;
+            align-items:center;justify-content:center;`;
+        btn.innerHTML = '📍';
+        btn.addEventListener('click', function () { locateUser(map); });
+        map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(btn);
+    }
+
+    function locateUser(targetMap) {
+        if (!navigator.geolocation) {
+            showDriverToast('Geolocation is not supported by your browser.', 'error'); return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                userPosition = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                const accuracy = pos.coords.accuracy;
+
+                // Nearby map dot
+                if (userDotNearby) { userDotNearby.marker.setMap(null); userCircleNearby.setMap(null); }
+                const nd = placeUserDot(nearbyMap, userPosition, accuracy);
+                userDotNearby = nd; userCircleNearby = nd.circle;
+
+                // Full map dot (if already created)
+                if (fullMap) {
+                    if (userDotFull) { userDotFull.marker.setMap(null); userCircleFull.setMap(null); }
+                    const fd = placeUserDot(fullMap, userPosition, accuracy);
+                    userDotFull = fd; userCircleFull = fd.circle;
+                    if (targetMap === fullMap) { fullMap.setCenter(userPosition); fullMap.setZoom(15); }
+                }
+
+                nearbyMap.setCenter(userPosition);
+                if (targetMap === nearbyMap) nearbyMap.setZoom(15);
+            },
+            function (err) {
+                const msg = err.code === 1
+                    ? 'Location access denied. Please allow location in browser settings.'
+                    : 'Unable to retrieve your location.';
+                showDriverToast(msg, 'error');
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    // ── Init nearby map when Maps API loads ────────────────────────────────────
+    window.initDriverMap = function () {
+        nearbyMap = new google.maps.Map(document.getElementById('nearby-map'), baseMapOptions());
+        addLocateMeButton(nearbyMap);
+        locateUser(nearbyMap);
+        loadLocationsOnMap();
+    };
+
+    // ── Init fullMap lazily when Find Parking view is shown ────────────────────
+    const _origShowView = showView;
+    window.showView = function (id, btn) {
+        _origShowView(id, btn);
+        if (id === 'driver-map') {
+            setTimeout(function () {
+                if (!nearbyMap) return;   // Maps API not loaded yet — nothing to do
+                if (!fullMap) {
+                    fullMap = new google.maps.Map(
+                        document.getElementById('full-map'),
+                        baseMapOptions(userPosition || undefined)
+                    );
+                    addLocateMeButton(fullMap);
+                    // Place user dot if we already have location
+                    if (userPosition) {
+                        const fd = placeUserDot(fullMap, userPosition);
+                        userDotFull = fd; userCircleFull = fd.circle;
+                        fullMap.setCenter(userPosition);
+                    }
+                    // Place all location markers on fullMap
+                    allLocations.forEach(function (loc) {
+                        if (!loc.latitude || !loc.longitude) return;
+                        const m = new google.maps.Marker({
+                            position: { lat: loc.latitude, lng: loc.longitude }, map: fullMap,
+                            title: loc.name, icon: makeMarkerIcon(getMarkerColor(loc.availableSlots || 0)),
+                        });
+                        m.addListener('click', function () { selectLocation(loc); });
+                    });
+                } else {
+                    google.maps.event.trigger(fullMap, 'resize');
+                }
+            }, 80);
+        }
+        if (id === 'driver-dashboard' && nearbyMap) {
+            setTimeout(function () { google.maps.event.trigger(nearbyMap, 'resize'); }, 80);
+        }
+    };
+
+    // ── Load & place location markers ─────────────────────────────────────────
+    async function loadLocationsOnMap() {
+        try {
+            const locs = await LocationAPI.getAll();
+            allLocations = locs.filter(l => l.active);
+            allLocations.forEach(placeLocationMarker);
+        } catch (e) { console.error('Could not load locations', e); }
+    }
+
+    function getMarkerColor(availableSlots) {
+        if (availableSlots === 0) return '#ff4757';
+        if (availableSlots <= 2) return '#ffb020';
+        return '#00e5a0';
+    }
+
+    function makeMarkerIcon(color) {
+        return {
+            path: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+            fillColor: color, fillOpacity: 1,
+            strokeColor: '#ffffff', strokeWeight: 1.5,
+            scale: 2, anchor: new google.maps.Point(12, 22),
+        };
+    }
+
+    function placeLocationMarker(loc) {
+        if (!loc.latitude || !loc.longitude) return;
+        const icon = makeMarkerIcon(getMarkerColor(loc.availableSlots || 0));
+        const pos  = { lat: loc.latitude, lng: loc.longitude };
+
+        // Nearby map marker — navigates to Find Parking and selects this location
+        const nMarker = new google.maps.Marker({ position: pos, map: nearbyMap, title: loc.name, icon });
+        nMarker.addListener('click', function () {
+            showView('driver-map', null);
+            setTimeout(function () { selectLocation(loc); }, 400);
+        });
+    }
+
+    // ── Location click → populate slot panel ──────────────────────────────────
+    async function selectLocation(loc) {
+        selectedLocation = loc;
+        fullMap.panTo({ lat: loc.latitude, lng: loc.longitude });
+        fullMap.setZoom(15);
+
+        const panel = document.getElementById('location-detail-panel');
+        panel.innerHTML = `
+            <div class="card-header">
+                <span>📍</span><span class="card-title" style="flex:1;">${loc.name}</span>
+            </div>
+            <div class="card-body" style="flex:1;overflow-y:auto;padding:16px;">
+                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">${loc.address}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                    <span style="background:rgba(0,229,160,0.1);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;">
+                        ${loc.availableSlots} Available
+                    </span>
+                    <span style="background:rgba(255,176,32,0.1);color:var(--warning);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;">
+                        ${loc.pricePerHour} LKR / h
+                    </span>
+                </div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Available Slots</div>
+                <div id="slot-list"><div style="text-align:center;padding:24px;color:var(--text-muted);">Loading slots…</div></div>
+            </div>`;
+
+        try {
+            const slots = await SlotAPI.getByLocation(loc.id);
+            const available = slots.filter(s => s.status === 'AVAILABLE');
+            const slotList = document.getElementById('slot-list');
+            if (!slotList) return;
+
+            if (available.length === 0) {
+                slotList.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger);">No available slots at this location.</div>`;
+                return;
+            }
+
+            const vehicleIcons = { CAR:'🚗', BIKE:'🏍', VAN:'🚐', TRUCK:'🚛', THREE_WHEELER:'🛺' };
+            slotList.innerHTML = available.map(slot => `
+                <div class="slot-item">
+                    <div>
+                        <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:15px;color:var(--accent);">${slot.slotNumber}</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${vehicleIcons[slot.vehicleType] || '🚘'} ${slot.vehicleType || '—'}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${loc.pricePerHour} LKR/h</div>
+                        <button class="btn btn-primary btn-sm" onclick="openBookingModal(${slot.id},'${slot.slotNumber}',${loc.pricePerHour})">
+                            Request Slot
+                        </button>
+                    </div>
+                </div>`).join('');
+        } catch (e) {
+            const sl = document.getElementById('slot-list');
+            if (sl) sl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger);">${e.message}</div>`;
+        }
+    }
+
+    // ── Booking modal ──────────────────────────────────────────────────────────
+    function openBookingModal(slotId, slotNumber, pricePerHour) {
+        document.getElementById('modal-slot-number').textContent   = slotNumber;
+        document.getElementById('modal-location-name').textContent = selectedLocation ? selectedLocation.name : '';
+        document.getElementById('modal-price-rate').textContent    = pricePerHour + ' LKR/h';
+        document.getElementById('modal-rate-display').textContent  = pricePerHour + ' LKR/h';
+        document.getElementById('booking-slot-id').value           = slotId;
+        document.getElementById('booking-price-rate').value        = pricePerHour;
+        document.getElementById('booking-date').value              = new Date().toISOString().split('T')[0];
+        document.getElementById('booking-error').style.display     = 'none';
+        calcBookingPrice();
+        document.getElementById('booking-modal').classList.add('open');
+    }
+
+    function closeBookingModal() {
+        document.getElementById('booking-modal').classList.remove('open');
+    }
+
+    function calcBookingPrice() {
+        const start = document.getElementById('booking-start').value;
+        const end   = document.getElementById('booking-end').value;
+        const rate  = parseFloat(document.getElementById('booking-price-rate').value) || 0;
+        if (!start || !end) return;
+        const mins = (end.split(':')[0] * 60 + +end.split(':')[1]) - (start.split(':')[0] * 60 + +start.split(':')[1]);
+        if (mins <= 0) { document.getElementById('modal-price-total').textContent = '—'; return; }
+        const hours = mins / 60;
+        document.getElementById('modal-duration').textContent    = hours.toFixed(1) + ' h';
+        document.getElementById('modal-price-total').textContent = Math.round(hours * rate) + ' LKR';
+    }
+
+    async function submitBooking() {
+        const user = getCurrentUser();
+        const slotId    = parseInt(document.getElementById('booking-slot-id').value);
+        const date      = document.getElementById('booking-date').value;
+        const start     = document.getElementById('booking-start').value;
+        const end       = document.getElementById('booking-end').value;
+        const errEl     = document.getElementById('booking-error');
+
+        if (!date || !start || !end) {
+            errEl.textContent = 'Please fill in all fields.';
+            errEl.style.display = 'block';
+            return;
+        }
+        const mins = (end.split(':')[0] * 60 + +end.split(':')[1]) - (start.split(':')[0] * 60 + +start.split(':')[1]);
+        if (mins <= 0) {
+            errEl.textContent = 'End time must be after start time.';
+            errEl.style.display = 'block';
+            return;
+        }
+        errEl.style.display = 'none';
+
+        try {
+            await apiFetch('/api/appointments', {
+                method: 'POST',
+                body: JSON.stringify({
+                    driverId: user.id, slotId,
+                    startTime: `${date}T${start}:00`,
+                    endTime:   `${date}T${end}:00`,
+                    status: 'PENDING',
+                }),
+            });
+            closeBookingModal();
+            showDriverToast('Booking request submitted successfully!');
+            if (selectedLocation) selectLocation(selectedLocation);
+        } catch (e) {
+            errEl.textContent = e.message || 'Failed to submit booking.';
+            errEl.style.display = 'block';
+        }
+    }
+
+    function showDriverToast(msg, type = 'success') {
+        const el = document.createElement('div');
+        el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+            border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+            background:${type === 'success' ? 'var(--accent)' : 'var(--danger)'};
+            color:${type === 'success' ? '#000' : '#fff'};`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
+
+    // Close modal on backdrop click
+    document.getElementById('booking-modal').addEventListener('click', function (e) {
+        if (e.target === this) closeBookingModal();
+    });
+</script>
+</body>
+</html>

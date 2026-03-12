@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkSmart — Parking Owner Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/Style.css">
+    <style>
+        .gear-wrapper { position: relative; }
+        .gear-dropdown {
+            display: none; position: absolute; top: calc(100% + 8px); right: 0;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 12px; min-width: 160px; padding: 6px; z-index: 100;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .gear-dropdown.open { display: block; }
+        .gear-dropdown-item {
+            display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+            border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted);
+            transition: background 0.15s;
+        }
+        .gear-dropdown-item:hover { background: var(--surface3); color: var(--text); }
+        .gear-dropdown-item.danger { color: var(--danger); }
+        .gear-dropdown-item.danger:hover { background: rgba(255,71,87,0.1); color: var(--danger); }
+
+        /* ── Confirm Modal ── */
+        #confirm-modal {
+            display: none; position: fixed; inset: 0; z-index: 2000;
+            background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center;
+        }
+        #confirm-modal.open { display: flex; }
+        #confirm-modal .modal-box {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 20px; padding: 32px; max-width: 420px; width: 90%;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+            animation: modal-in 0.18s ease;
+        }
+        @keyframes modal-in {
+            from { transform: scale(0.92); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon">🅿</div>
+            <div class="logo-text">Park<span>Smart</span></div>
+        </div>
+
+        <div class="nav-section" id="nav-owner">
+            <div class="role-label">Parking Owner</div>
+            <button class="nav-item active" onclick="showView('owner-dashboard', this)">
+                <span class="nav-icon">⊞</span> Dashboard
+            </button>
+            <button class="nav-item" onclick="showView('owner-slots', this)">
+                <span class="nav-icon">🅿</span> Parking Slots
+            </button>
+            <button class="nav-item" onclick="showView('owner-requests', this)">
+                <span class="nav-icon">📨</span> Requests
+                <span class="badge danger">3</span>
+            </button>
+            <button class="nav-item" onclick="showView('owner-scan', this)">
+                <span class="nav-icon">📷</span> Scan QR
+            </button>
+            <button class="nav-item" onclick="showView('owner-earnings', this)">
+                <span class="nav-icon">💰</span> Earnings
+            </button>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="avatar" id="sidebar-avatar" style="background:linear-gradient(135deg,var(--warning),var(--accent3))">?</div>
+                <div class="user-info">
+                    <div class="user-name" id="sidebar-name">—</div>
+                    <div class="user-role" id="sidebar-role">—</div>
+                </div>
+                <div class="online-dot"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+        <div class="topbar">
+            <div>
+                <div class="topbar-title" id="topbar-title">Owner Dashboard</div>
+                <div class="topbar-subtitle" id="topbar-date"></div>
+            </div>
+            <div class="topbar-right">
+                <div class="search-box">
+                    <span>🔍</span>
+                    <input type="text" placeholder="Search bookings, slots...">
+                </div>
+                <div class="icon-btn" id="theme-toggle-btn" title="Toggle day/night mode">🌙</div>
+                <div class="icon-btn">🔔</div>
+                <div class="gear-wrapper">
+                    <div class="icon-btn" id="gear-btn">⚙</div>
+                    <div class="gear-dropdown" id="gear-dropdown">
+                        <div class="gear-dropdown-item danger" onclick="logout()">⏻ Logout</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+
+            <!-- ========== OWNER DASHBOARD ========== -->
+            <div id="owner-dashboard" class="view active">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon">🅿</div>
+                        <div class="stat-label">Total Slots</div>
+                        <div class="stat-value" id="dash-total-slots">—</div>
+                        <div class="stat-change" id="dash-slots-detail">Loading...</div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-label">Today's Bookings</div>
+                        <div class="stat-value">11</div>
+                        <div class="stat-change"><span class="up">↑ 3</span> from yesterday</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-icon">📨</div>
+                        <div class="stat-label">Pending Requests</div>
+                        <div class="stat-value">3</div>
+                        <div class="stat-change" style="color:var(--danger)">Needs attention</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-label">Monthly Revenue</div>
+                        <div class="stat-value">38,400</div>
+                        <div class="stat-change">LKR (after 20% fee)</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <!-- EARNINGS CHART -->
+                    <div class="card">
+                        <div class="card-header"><span>📈</span><span class="card-title">Daily Earnings</span><span class="card-subtitle">This Week</span></div>
+                        <div class="card-body">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;">
+                                <div>
+                                    <div style="font-size:28px;font-family:'Syne',sans-serif;font-weight:800;">48,000 <span style="font-size:14px;color:var(--text-muted);font-weight:400">LKR</span></div>
+                                    <div style="font-size:12px;color:var(--accent);">↑ 18% vs last week</div>
+                                </div>
+                                <div style="font-size:12px;color:var(--text-muted);">Net after 20%: <b style="color:var(--text)">38,400 LKR</b></div>
+                            </div>
+                            <div class="mini-chart">
+                                <div class="chart-bar" style="height:40%"><div class="bar-tip">5,200</div></div>
+                                <div class="chart-bar" style="height:65%"><div class="bar-tip">7,800</div></div>
+                                <div class="chart-bar" style="height:50%"><div class="bar-tip">6,000</div></div>
+                                <div class="chart-bar highlighted" style="height:80%"><div class="bar-tip">9,600</div></div>
+                                <div class="chart-bar" style="height:55%"><div class="bar-tip">6,600</div></div>
+                                <div class="chart-bar" style="height:70%"><div class="bar-tip">8,400</div></div>
+                                <div class="chart-bar" style="height:38%"><div class="bar-tip">4,400</div></div>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;margin-top:6px;padding:0 4px;">
+                                <span style="font-size:10px;color:var(--text-dim);">Mon</span>
+                                <span style="font-size:10px;color:var(--text-dim);">Tue</span>
+                                <span style="font-size:10px;color:var(--text-dim);">Wed</span>
+                                <span style="font-size:10px;color:var(--accent);font-weight:600;">Thu</span>
+                                <span style="font-size:10px;color:var(--text-dim);">Fri</span>
+                                <span style="font-size:10px;color:var(--text-dim);">Sat</span>
+                                <span style="font-size:10px;color:var(--text-dim);">Sun</span>
+                            </div>
+                            <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px;">
+                                <div class="commission-display">
+                                    <div class="ring-wrap">
+                                        <svg class="ring-svg" viewBox="0 0 90 90" width="90" height="90">
+                                            <circle cx="45" cy="45" r="35" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
+                                            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="175 220" stroke-linecap="round"/>
+                                            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--accent3)" stroke-width="8" stroke-dasharray="44 220" stroke-dashoffset="-175" stroke-linecap="round"/>
+                                        </svg>
+                                        <div class="ring-text">
+                                            <div class="ring-pct">80%</div>
+                                            <div class="ring-sub">YOUR CUT</div>
+                                        </div>
+                                    </div>
+                                    <div class="commission-details">
+                                        <div class="comm-row"><span class="comm-label">Gross Revenue</span><span class="comm-value">48,000 LKR</span></div>
+                                        <div class="comm-row"><span class="comm-label">Admin Commission (20%)</span><span class="comm-value" style="color:var(--accent3)">9,600 LKR</span></div>
+                                        <div class="comm-row"><span class="comm-label">Your Earnings (80%)</span><span class="comm-value" style="color:var(--accent)">38,400 LKR</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PENDING REQUESTS -->
+                    <div class="card">
+                        <div class="card-header"><span>📨</span><span class="card-title">Pending Requests</span><span class="badge danger" style="margin-left:auto;">3</span></div>
+                        <div class="card-body">
+                            <div class="approval-card">
+                                <div class="approval-header"><div class="approval-title">Kasun Madushan</div><div class="approval-time">2 min ago</div></div>
+                                <div class="approval-details">CBC 1234 · Blue Toyota Aqua</div>
+                                <div class="approval-meta">
+                                    <div class="meta-chip">🅿 Slot A-14</div><div class="meta-chip">📅 Mar 06</div>
+                                    <div class="meta-chip">⏰ 14:00–17:00</div><div class="meta-chip">⏱ 3h</div>
+                                    <div class="meta-chip">💰 300 LKR</div>
+                                </div>
+                                <div class="approval-actions">
+                                    <button class="btn btn-primary btn-sm" style="flex:1">✓ Accept</button>
+                                    <button class="btn btn-danger btn-sm" style="flex:1">✕ Reject</button>
+                                </div>
+                            </div>
+                            <div class="approval-card">
+                                <div class="approval-header"><div class="approval-title">Malith Perera</div><div class="approval-time">15 min ago</div></div>
+                                <div class="approval-details">WP 5542 · Red Honda Civic</div>
+                                <div class="approval-meta">
+                                    <div class="meta-chip">🅿 Slot B-03</div><div class="meta-chip">📅 Mar 06</div>
+                                    <div class="meta-chip">⏰ 16:00–19:00</div><div class="meta-chip">⏱ 3h</div>
+                                    <div class="meta-chip">💰 300 LKR</div>
+                                </div>
+                                <div class="approval-actions">
+                                    <button class="btn btn-primary btn-sm" style="flex:1">✓ Accept</button>
+                                    <button class="btn btn-danger btn-sm" style="flex:1">✕ Reject</button>
+                                </div>
+                            </div>
+                            <div class="approval-card">
+                                <div class="approval-header"><div class="approval-title">Nishani Fernando</div><div class="approval-time">1h ago</div></div>
+                                <div class="approval-details">WP 7823 · Black Honda CB150 (Bike)</div>
+                                <div class="approval-meta">
+                                    <div class="meta-chip">🅿 Slot B-10</div><div class="meta-chip">📅 Mar 07</div>
+                                    <div class="meta-chip">⏰ 09:00–11:00</div><div class="meta-chip">⏱ 2h</div>
+                                    <div class="meta-chip">💰 100 LKR</div>
+                                </div>
+                                <div class="approval-actions">
+                                    <button class="btn btn-primary btn-sm" style="flex:1">✓ Accept</button>
+                                    <button class="btn btn-danger btn-sm" style="flex:1">✕ Reject</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== OWNER SLOTS ========== -->
+            <div id="owner-slots" class="view">
+
+                <!-- LOCATIONS PANEL -->
+                <div id="locations-panel">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <div>
+                            <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">My Parking Locations</div>
+                            <div style="font-size:12px;color:var(--text-muted);">Add and manage your parking lots</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="ownerSlots.toggleForm('location-form')">+ Add Location</button>
+                    </div>
+
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="card-body" style="padding:0;">
+                            <table class="slots-table">
+                                <thead>
+                                <tr>
+                                    <th>ID</th><th>Name</th><th>Address</th><th>Capacity</th>
+                                    <th>Available</th><th>Rate/h</th><th>Status</th><th style="text-align:center">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody id="locations-tbody">
+                                <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Loading locations...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add Location Form -->
+                    <div id="location-form" style="display:none;">
+                        <div class="card">
+                            <div class="card-header"><span>🅿</span><span class="card-title">Add New Parking Location</span></div>
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Location Name *</label>
+                                        <input id="loc-name" class="form-control" placeholder="e.g. Majestic City Parking"
+                                               oninput="ownerSlots.checkLocForm()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Address *</label>
+                                        <input id="loc-address" class="form-control" placeholder="Auto-filled when you pin the map"
+                                               oninput="ownerSlots.checkLocForm()">
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Total Capacity *</label>
+                                        <input id="loc-capacity" class="form-control" placeholder="e.g. 20" type="number" min="1"
+                                               oninput="ownerSlots.checkLocForm()">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Rate per Hour (LKR) *</label>
+                                        <input id="loc-rate" class="form-control" placeholder="e.g. 200" type="number" min="0"
+                                               oninput="ownerSlots.checkLocForm()">
+                                    </div>
+                                </div>
+
+                                <!-- Hidden lat/lng — populated automatically by map click -->
+                                <input id="loc-lat" type="hidden">
+                                <input id="loc-lng" type="hidden">
+
+                                <!-- Google Map Picker -->
+                                <div class="form-group">
+                                    <label class="form-label">📍 Select Location on Map *</label>
+                                    <div id="location-picker-map"
+                                         style="width:100%;height:360px;border-radius:14px;overflow:hidden;
+                                                border:1px solid var(--border);background:var(--surface2);">
+                                    </div>
+                                    <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+                                        Click anywhere on the map to pin your parking location.
+                                        Existing locations shown in <span style="color:var(--warning);font-weight:600;">orange</span>.
+                                    </div>
+                                </div>
+
+                                <!-- Selected coordinates badge -->
+                                <div id="loc-coords-display" style="display:none;margin-bottom:16px;">
+                                    <div style="display:inline-flex;align-items:center;gap:8px;
+                                                background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);
+                                                border-radius:10px;padding:8px 14px;">
+                                        <span style="color:var(--accent);">📍</span>
+                                        <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);"
+                                              id="loc-coords-text">—</span>
+                                    </div>
+                                </div>
+
+                                <div style="display:flex;gap:10px;">
+                                    <button id="loc-save-btn" class="btn btn-primary" disabled style="opacity:0.5;cursor:not-allowed;"
+                                            onclick="ownerSlots.submitLocation()">+ Add Location</button>
+                                    <button class="btn btn-ghost" onclick="ownerSlots.toggleForm('location-form')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SLOTS PANEL (shown when Manage Slots is clicked) -->
+                <div id="slots-panel" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <div>
+                            <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">Slots — <span id="slots-location-name">—</span></div>
+                            <div style="font-size:12px;color:var(--text-muted)" id="slots-location-address">—</div>
+                        </div>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-ghost" onclick="ownerSlots.closeSlots()">← Back</button>
+                            <button class="btn btn-primary" onclick="ownerSlots.toggleForm('slot-form')">+ Add Slot</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:16px;">
+                        <div class="card-body" style="padding:0;">
+                            <table class="slots-table">
+                                <thead>
+                                <tr><th>Slot #</th><th>Vehicle Type</th><th>Status</th><th style="text-align:center">Actions</th></tr>
+                                </thead>
+                                <tbody id="slots-tbody">
+                                <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading slots...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Add Slot Form -->
+                    <div id="slot-form" style="display:none;">
+                        <div class="card">
+                            <div class="card-header"><span>🅿</span><span class="card-title">Add New Slot</span></div>
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Slot Number *</label>
+                                        <input id="slot-number" class="form-control" placeholder="e.g. A-01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Vehicle Type *</label>
+                                        <select id="slot-vehicle-type" class="form-control">
+                                            <option value="CAR">Car</option>
+                                            <option value="BIKE">Bike</option>
+                                            <option value="VAN">Van</option>
+                                            <option value="TRUCK">Truck</option>
+                                            <option value="THREE_WHEELER">Three-Wheeler</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:10px;">
+                                    <button class="btn btn-primary" onclick="ownerSlots.submitSlot()">+ Add Slot</button>
+                                    <button class="btn btn-ghost" onclick="ownerSlots.toggleForm('slot-form')">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ========== OWNER REQUESTS ========== -->
+            <div id="owner-requests" class="view">
+                <div style="margin-bottom:20px;">
+                    <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">Appointment Requests</div>
+                    <div style="font-size:12px;color:var(--text-muted);">Review and manage incoming booking requests</div>
+                </div>
+                <div class="approval-card">
+                    <div class="approval-header"><div class="approval-title">Kasun Madushan</div><div class="approval-time">2 min ago</div></div>
+                    <div class="approval-details">CBC 1234 · Blue Toyota Aqua · Car</div>
+                    <div class="approval-meta">
+                        <div class="meta-chip">🅿 Slot A-14</div><div class="meta-chip">📅 Mar 06, 2026</div>
+                        <div class="meta-chip">⏰ 14:00–17:00</div><div class="meta-chip">⏱ 3 hours</div>
+                        <div class="meta-chip">💰 300 LKR</div>
+                        <div class="meta-chip" style="color:var(--accent)">Commission: 60 LKR</div>
+                    </div>
+                    <div class="approval-actions">
+                        <button class="btn btn-primary" style="flex:1">✓ Accept</button>
+                        <button class="btn btn-danger" style="flex:1">✕ Reject</button>
+                    </div>
+                </div>
+                <div class="approval-card">
+                    <div class="approval-header"><div class="approval-title">Malith Perera</div><div class="approval-time">15 min ago</div></div>
+                    <div class="approval-details">WP 5542 · Red Honda Civic · Car</div>
+                    <div class="approval-meta">
+                        <div class="meta-chip">🅿 Slot B-03</div><div class="meta-chip">📅 Mar 06, 2026</div>
+                        <div class="meta-chip">⏰ 16:00–19:00</div><div class="meta-chip">⏱ 3 hours</div>
+                        <div class="meta-chip">💰 300 LKR</div>
+                    </div>
+                    <div class="approval-actions">
+                        <button class="btn btn-primary" style="flex:1">✓ Accept</button>
+                        <button class="btn btn-danger" style="flex:1">✕ Reject</button>
+                    </div>
+                </div>
+                <div class="approval-card">
+                    <div class="approval-header"><div class="approval-title">Nishani Fernando</div><div class="approval-time">1h ago</div></div>
+                    <div class="approval-details">WP 7823 · Black Honda CB150 · Bike</div>
+                    <div class="approval-meta">
+                        <div class="meta-chip">🅿 Slot B-10</div><div class="meta-chip">📅 Mar 07, 2026</div>
+                        <div class="meta-chip">⏰ 09:00–11:00</div><div class="meta-chip">⏱ 2 hours</div>
+                        <div class="meta-chip">💰 100 LKR</div>
+                    </div>
+                    <div class="approval-actions">
+                        <button class="btn btn-primary" style="flex:1">✓ Accept</button>
+                        <button class="btn btn-danger" style="flex:1">✕ Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== OWNER SCAN QR ========== -->
+            <div id="owner-scan" class="view">
+                <div style="max-width:500px;margin:0 auto;">
+                    <div class="card">
+                        <div class="card-header"><span>📷</span><span class="card-title">Scan Arrival QR Code</span></div>
+                        <div class="card-body" style="text-align:center;">
+                            <div class="scan-area">
+                                <div class="scan-line"></div>
+                                <div class="scan-icon">⬛</div>
+                                <div class="scan-text">Position QR code in frame</div>
+                            </div>
+                            <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Use device camera to scan the driver's QR code upon arrival</p>
+                            <div style="display:flex;gap:10px;margin-bottom:20px;">
+                                <button class="btn btn-primary" style="flex:1;">📷 Open Camera</button>
+                                <button class="btn btn-ghost" style="flex:1;">⌨ Enter Code</button>
+                            </div>
+                            <div style="border-top:1px solid var(--border);padding-top:16px;">
+                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Or verify manually</div>
+                                <input class="form-control" placeholder="Enter Booking ID (e.g. PS-2024-0381)" style="margin-bottom:10px;">
+                                <button class="btn btn-primary" style="width:100%;">✓ Verify Booking</button>
+                            </div>
+                            <div style="margin-top:20px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:14px;padding:16px;text-align:left;">
+                                <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                                    <div style="width:32px;height:32px;background:rgba(0,229,160,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;">✓</div>
+                                    <div>
+                                        <div style="font-size:13px;font-weight:700;color:var(--accent)">Booking Verified</div>
+                                        <div style="font-size:11px;color:var(--text-muted)">#PS-2024-0381</div>
+                                    </div>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+                                    <div><span style="color:var(--text-muted)">Driver:</span> Kasun Madushan</div>
+                                    <div><span style="color:var(--text-muted)">Vehicle:</span> CBC 1234</div>
+                                    <div><span style="color:var(--text-muted)">Slot:</span> A-14</div>
+                                    <div><span style="color:var(--text-muted)">Time:</span> 14:00–17:00</div>
+                                </div>
+                                <button class="btn btn-primary" style="width:100%;margin-top:12px;">✓ Mark as Arrived</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========== OWNER EARNINGS ========== -->
+            <div id="owner-earnings" class="view">
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-label">Gross Revenue (Month)</div>
+                        <div class="stat-value" style="font-size:24px;">48,000</div>
+                        <div class="stat-change">LKR total collected</div>
+                    </div>
+                    <div class="stat-card orange">
+                        <div class="stat-label">Platform Commission</div>
+                        <div class="stat-value" style="font-size:24px;">9,600</div>
+                        <div class="stat-change">20% to ParkSmart</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Net Earnings</div>
+                        <div class="stat-value" style="font-size:24px;color:var(--accent)">38,400</div>
+                        <div class="stat-change up">80% yours</div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-label">Completed Bookings</div>
+                        <div class="stat-value" style="font-size:24px;">128</div>
+                        <div class="stat-change">This month</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span>💰</span><span class="card-title">Transaction History</span></div>
+                    <div class="card-body" style="padding:0;">
+                        <table class="slots-table">
+                            <thead>
+                            <tr>
+                                <th>Booking ID</th><th>Driver</th><th>Slot</th><th>Date</th>
+                                <th>Duration</th><th>Gross</th><th>Commission (20%)</th><th>Net Earned</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0381</td>
+                                <td>Kasun M.</td><td>A-14</td><td style="font-size:12px;">Mar 06</td><td>3h</td>
+                                <td class="tx-amount-positive">300 LKR</td>
+                                <td style="font-family:'DM Mono',monospace;color:var(--accent3);">60 LKR</td>
+                                <td class="tx-amount-positive">240 LKR</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0375</td>
+                                <td>Malith P.</td><td>C-08</td><td style="font-size:12px;">Mar 03</td><td>5h</td>
+                                <td class="tx-amount-positive">450 LKR</td>
+                                <td style="font-family:'DM Mono',monospace;color:var(--accent3);">90 LKR</td>
+                                <td class="tx-amount-positive">360 LKR</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0360</td>
+                                <td>Nishani F.</td><td>B-10</td><td style="font-size:12px;">Feb 28</td><td>2h (Bike)</td>
+                                <td class="tx-amount-positive">100 LKR</td>
+                                <td style="font-family:'DM Mono',monospace;color:var(--accent3);">20 LKR</td>
+                                <td class="tx-amount-positive">80 LKR</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<!-- ── Confirm Modal ─────────────────────────────────────────── -->
+<div id="confirm-modal">
+    <div class="modal-box">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+            <div style="width:44px;height:44px;background:rgba(255,71,87,0.15);border-radius:50%;
+                        display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🗑</div>
+            <div>
+                <div id="confirm-title" style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin-bottom:3px;">Confirm Delete</div>
+                <div style="font-size:11px;color:var(--text-dim);">This action cannot be undone</div>
+            </div>
+        </div>
+        <div id="confirm-msg" style="color:var(--text-muted);font-size:13px;line-height:1.65;
+                                     background:var(--surface3);border-radius:12px;padding:14px 16px;
+                                     margin-bottom:24px;border:1px solid var(--border);"></div>
+        <div style="display:flex;gap:10px;">
+            <button id="confirm-cancel-btn" class="btn btn-ghost" style="flex:1;">Cancel</button>
+            <button id="confirm-ok-btn" class="btn btn-danger" style="flex:1;">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script src="../js/script.js"></script>
+<script src="../js/config.js"></script>
+<script src="../js/api/api.config.js"></script>
+<script src="../js/api/auth.api.js"></script>
+<script src="../js/api/location.api.js"></script>
+<script src="../js/api/slot.api.js"></script>
+<script>
+    // ── Session & UI init ──────────────────────────────────────────────────────
+    (function () {
+        const user = getCurrentUser();
+        if (!user) { window.location.href = '../index.html'; return; }
+        const initials = ((user.firstName || '')[0] || '') + ((user.lastName || '')[0] || '');
+        document.getElementById('sidebar-avatar').textContent = initials.toUpperCase() || '?';
+        document.getElementById('sidebar-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
+        const roleLabels = { DRIVER: 'Driver', OWNER: 'Parking Owner', ADMIN: 'System Administrator' };
+        document.getElementById('sidebar-role').textContent = roleLabels[user.role] || user.role;
+    })();
+
+    document.getElementById('topbar-date').textContent =
+        new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: '2-digit' });
+
+    // ── Theme toggle ───────────────────────────────────────────────────────────
+    (function () {
+        const btn = document.getElementById('theme-toggle-btn');
+        function applyTheme(light) {
+            document.body.classList.toggle('light', light);
+            btn.textContent = light ? '🌙' : '☀️';
+            btn.title = light ? 'Switch to night mode' : 'Switch to day mode';
+        }
+        applyTheme(localStorage.getItem('theme') === 'light');
+        btn.addEventListener('click', function () {
+            const isLight = !document.body.classList.contains('light');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            applyTheme(isLight);
+            ownerSlots.setMapTheme(isLight);
+        });
+    })();
+
+    document.getElementById('gear-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.getElementById('gear-dropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', function () {
+        document.getElementById('gear-dropdown').classList.remove('open');
+    });
+
+    // ── Dashboard stats ────────────────────────────────────────────────────────
+    async function loadDashboardStats() {
+        const user = getCurrentUser();
+        if (!user) return;
+        try {
+            const slots = await SlotAPI.getByOwner(user.id);
+            const total    = slots.length;
+            const active   = slots.filter(s => s.status === 'AVAILABLE' || s.status === 'OCCUPIED').length;
+            const inactive = slots.filter(s => s.status === 'INACTIVE').length;
+            document.getElementById('dash-total-slots').textContent  = total;
+            document.getElementById('dash-slots-detail').textContent =
+                total === 0 ? 'No slots added yet'
+                            : `${active} Active, ${inactive} Inactive`;
+        } catch (e) {
+            document.getElementById('dash-slots-detail').textContent = 'Failed to load';
+        }
+    }
+    loadDashboardStats();
+
+    // ── Intercept showView to load locations when tab opens ───────────────────
+    (function () {
+        const _orig = window.showView;
+        window.showView = function (id, btn) {
+            if (typeof _orig === 'function') _orig(id, btn);
+            if (id === 'owner-slots')     ownerSlots.loadLocations();
+            if (id === 'owner-dashboard') loadDashboardStats();
+        };
+    })();
+
+    // ── Google Maps dynamic loader ─────────────────────────────────────────────
+    window.initLocationMap = function () { /* callback stub; map init is lazy */ };
+    (function () {
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&callback=initLocationMap&loading=async`;
+        s.async = true; s.defer = true;
+        document.head.appendChild(s);
+    })();
+
+    // ── Dark map style ─────────────────────────────────────────────────────────
+    const DARK_MAP_STYLES = [
+        { elementType: 'geometry',            stylers: [{ color: '#1c2230' }] },
+        { elementType: 'labels.text.stroke',  stylers: [{ color: '#1c2230' }] },
+        { elementType: 'labels.text.fill',    stylers: [{ color: '#8b949e' }] },
+        { featureType: 'road',       elementType: 'geometry',        stylers: [{ color: '#212840' }] },
+        { featureType: 'road',       elementType: 'geometry.stroke', stylers: [{ color: '#161b22' }] },
+        { featureType: 'road',       elementType: 'labels.text.fill',stylers: [{ color: '#6e7681' }] },
+        { featureType: 'water',      elementType: 'geometry',        stylers: [{ color: '#0d1117' }] },
+        { featureType: 'poi',        elementType: 'geometry',        stylers: [{ color: '#1c2230' }] },
+        { featureType: 'poi',        elementType: 'labels',          stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit',    elementType: 'geometry',        stylers: [{ color: '#1c2230' }] },
+        { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#212840' }] },
+    ];
+
+    // ── Parking Locations & Slots Manager ─────────────────────────────────────
+    const ownerSlots = (() => {
+        let selectedLocationId = null;
+        let currentSlots = [];
+        let currentLocations = [];      // cached for edit lookup
+        let editingLocationId = null;   // null = create mode, number = edit mode
+
+        // ── Map state ─────────────────────────────────────────────────────────
+        let map = null;
+        let selectedMarker = null;
+        let locationMarkers = [];
+
+        const vehicleLabels = {
+            CAR: '🚗 Car', BIKE: '🏍 Bike', VAN: '🚐 Van',
+            TRUCK: '🚛 Truck', THREE_WHEELER: '🛺 Three-Wheeler'
+        };
+
+        const statusBadge = {
+            AVAILABLE: '<span class="slot-badge slot-open">Available</span>',
+            OCCUPIED:  '<span class="slot-badge slot-full">Occupied</span>',
+            INACTIVE:  '<span class="slot-badge" style="background:rgba(255,176,32,0.12);color:var(--warning)">Inactive</span>',
+        };
+
+        function toast(msg, type = 'success') {
+            const el = document.createElement('div');
+            el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+                border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+                background:${type === 'success' ? 'var(--accent)' : 'var(--danger)'};
+                color:${type === 'success' ? '#000' : '#fff'};`;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        // ── Map helpers ───────────────────────────────────────────────────────
+
+        function initMap() {
+            if (map) {
+                // Already initialised — just resize and show existing pins
+                google.maps.event.trigger(map, 'resize');
+                refreshExistingPins();
+                return;
+            }
+            map = new google.maps.Map(document.getElementById('location-picker-map'), {
+                center: { lat: 6.9271, lng: 79.8612 },
+                zoom: 13,
+                styles: document.body.classList.contains('light') ? [] : DARK_MAP_STYLES,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+            });
+
+            map.addListener('click', function (event) {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+
+                if (selectedMarker) {
+                    selectedMarker.setPosition(event.latLng);
+                } else {
+                    selectedMarker = new google.maps.Marker({
+                        position: event.latLng,
+                        map: map,
+                        title: 'Selected Location',
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 11,
+                            fillColor: '#00e5a0',
+                            fillOpacity: 1,
+                            strokeWeight: 2.5,
+                            strokeColor: '#ffffff',
+                        },
+                        animation: google.maps.Animation.DROP,
+                        zIndex: 10,
+                    });
+                }
+
+                document.getElementById('loc-lat').value = lat.toFixed(6);
+                document.getElementById('loc-lng').value = lng.toFixed(6);
+                document.getElementById('loc-coords-display').style.display = 'block';
+                document.getElementById('loc-coords-text').textContent =
+                    `Lat: ${lat.toFixed(6)}  ·  Lng: ${lng.toFixed(6)}`;
+
+                // Reverse geocode → auto-fill address
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ location: event.latLng }, function (results, status) {
+                    if (status === 'OK' && results[0]) {
+                        document.getElementById('loc-address').value = results[0].formatted_address;
+                    }
+                    checkLocForm();
+                });
+                checkLocForm();
+            });
+
+            refreshExistingPins();
+        }
+
+        function refreshExistingPins() {
+            const user = getCurrentUser();
+            if (!user || !map) return;
+            LocationAPI.getByOwner(user.id).then(showExistingPins).catch(() => {});
+        }
+
+        function showExistingPins(locations) {
+            locationMarkers.forEach(m => m.setMap(null));
+            locationMarkers = [];
+            if (!map || !locations) return;
+            locations.forEach(loc => {
+                const marker = new google.maps.Marker({
+                    position: { lat: loc.latitude, lng: loc.longitude },
+                    map: map,
+                    title: loc.name,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 9,
+                        fillColor: '#ffb020',
+                        fillOpacity: 0.9,
+                        strokeWeight: 2,
+                        strokeColor: '#ffffff',
+                    },
+                });
+                const info = new google.maps.InfoWindow({
+                    content: `<div style="color:#000;font-size:12px;font-family:sans-serif;line-height:1.5;">
+                        <strong>${loc.name}</strong><br>${loc.address}<br>
+                        <span style="color:#333;">${loc.pricePerHour} LKR/h &nbsp;·&nbsp; ${loc.availableSlots} free</span>
+                    </div>`,
+                });
+                marker.addListener('click', () => info.open(map, marker));
+                locationMarkers.push(marker);
+            });
+        }
+
+        function resetLocationForm() {
+            editingLocationId = null;
+            ['loc-name', 'loc-address', 'loc-capacity', 'loc-rate'].forEach(id =>
+                document.getElementById(id).value = '');
+            document.getElementById('loc-lat').value = '';
+            document.getElementById('loc-lng').value = '';
+            document.getElementById('loc-coords-display').style.display = 'none';
+            const btn = document.getElementById('loc-save-btn');
+            btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed';
+            btn.textContent = '+ Add Location';
+            document.querySelector('#location-form .card-title').textContent = 'Add New Parking Location';
+            if (selectedMarker) { selectedMarker.setMap(null); selectedMarker = null; }
+        }
+
+        function editLocation(id) {
+            const loc = currentLocations.find(l => l.id === id);
+            if (!loc) return;
+            editingLocationId = loc.id;
+            // Open the form
+            const formEl = document.getElementById('location-form');
+            formEl.style.display = 'block';
+            // Pre-fill fields
+            document.getElementById('loc-name').value    = loc.name;
+            document.getElementById('loc-address').value = loc.address;
+            document.getElementById('loc-capacity').value = loc.capacity;
+            document.getElementById('loc-rate').value    = loc.pricePerHour;
+            document.getElementById('loc-lat').value     = loc.latitude;
+            document.getElementById('loc-lng').value     = loc.longitude;
+            document.getElementById('loc-coords-display').style.display = 'block';
+            document.getElementById('loc-coords-text').textContent =
+                `Lat: ${parseFloat(loc.latitude).toFixed(6)}  ·  Lng: ${parseFloat(loc.longitude).toFixed(6)}`;
+            // Update labels
+            document.getElementById('loc-save-btn').textContent = 'Update Location';
+            document.querySelector('#location-form .card-title').textContent = 'Edit Parking Location';
+            // Enable save (all fields filled)
+            checkLocForm();
+            // Scroll form into view
+            formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Init / refresh map and place existing pin
+            setTimeout(() => {
+                if (typeof google !== 'undefined' && google.maps) {
+                    initMap();
+                    const latLng = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+                    if (selectedMarker) {
+                        selectedMarker.setPosition(latLng);
+                    } else {
+                        selectedMarker = new google.maps.Marker({
+                            position: latLng,
+                            map: map,
+                            title: 'Selected Location',
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 11,
+                                fillColor: '#00e5a0',
+                                fillOpacity: 1,
+                                strokeWeight: 2.5,
+                                strokeColor: '#ffffff',
+                            },
+                            animation: google.maps.Animation.DROP,
+                            zIndex: 10,
+                        });
+                    }
+                    map.panTo(latLng);
+                }
+            }, 120);
+        }
+
+        function checkLocForm() {
+            const name     = document.getElementById('loc-name').value.trim();
+            const address  = document.getElementById('loc-address').value.trim();
+            const capacity = document.getElementById('loc-capacity').value;
+            const rate     = document.getElementById('loc-rate').value;
+            const lat      = document.getElementById('loc-lat').value;
+            const lng      = document.getElementById('loc-lng').value;
+            const valid = !!(name && address && capacity && rate && lat && lng);
+            const btn = document.getElementById('loc-save-btn');
+            btn.disabled = !valid;
+            btn.style.opacity = valid ? '1' : '0.5';
+            btn.style.cursor  = valid ? 'pointer' : 'not-allowed';
+        }
+
+        // ── Toggle form open/close ─────────────────────────────────────────────
+
+        function toggleForm(id) {
+            const el = document.getElementById(id);
+            const opening = el.style.display === 'none';
+            el.style.display = opening ? 'block' : 'none';
+            if (id === 'location-form') {
+                if (opening) {
+                    // Lazy-init map once DOM is visible
+                    setTimeout(() => {
+                        if (typeof google !== 'undefined' && google.maps) initMap();
+                    }, 120);
+                } else {
+                    resetLocationForm();
+                }
+            }
+        }
+
+        // ── LOCATIONS ──────────────────────────────────────────────────────────
+
+        async function loadLocations() {
+            const user = getCurrentUser();
+            if (!user) return;
+            document.getElementById('locations-tbody').innerHTML =
+                '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Loading...</td></tr>';
+            try {
+                const locs = await LocationAPI.getByOwner(user.id);
+                currentLocations = locs || [];
+                renderLocations(locs);
+            } catch (e) {
+                document.getElementById('locations-tbody').innerHTML =
+                    `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger)">${e.message}</td></tr>`;
+            }
+        }
+
+        function renderLocations(locs) {
+            const tbody = document.getElementById('locations-tbody');
+            if (!locs || locs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">No locations yet. Add your first parking location below.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = locs.map(loc => `
+                <tr>
+                    <td><span style="font-family:'DM Mono',monospace;color:var(--accent)">#LOC-${String(loc.id).padStart(3,'0')}</span></td>
+                    <td style="font-weight:600">${loc.name}</td>
+                    <td style="font-size:12px;color:var(--text-muted)">${loc.address}</td>
+                    <td>${loc.capacity}</td>
+                    <td><span class="slot-badge ${loc.availableSlots > 0 ? 'slot-open' : 'slot-full'}">${loc.availableSlots} Free</span></td>
+                    <td style="font-family:'DM Mono',monospace;">${loc.pricePerHour} LKR</td>
+                    <td>
+                        <span class="slot-badge ${loc.active ? 'slot-open' : 'slot-full'}" style="cursor:pointer"
+                              onclick="ownerSlots.toggleActive(${loc.id}, this)">
+                            ${loc.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td style="text-align:center">
+                        <div style="display:flex;gap:4px;justify-content:center;">
+                            <button class="btn btn-sm"
+                                style="background:rgba(255,176,32,0.12);color:var(--warning);border:1px solid rgba(255,176,32,0.3);"
+                                onclick="ownerSlots.manageSlots(${loc.id},'${loc.name.replace(/'/g,"\\'")}','${loc.address.replace(/'/g,"\\'")}')">
+                                Slots
+                            </button>
+                            <button class="btn btn-sm"
+                                style="background:rgba(0,229,160,0.12);color:var(--accent);border:1px solid rgba(0,229,160,0.3);"
+                                onclick="ownerSlots.editLocation(${loc.id})">
+                                Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="ownerSlots.deleteLocation(${loc.id})">Delete</button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+        }
+
+        async function submitLocation() {
+            const user = getCurrentUser();
+            const name     = document.getElementById('loc-name').value.trim();
+            const address  = document.getElementById('loc-address').value.trim();
+            const lat      = parseFloat(document.getElementById('loc-lat').value);
+            const lng      = parseFloat(document.getElementById('loc-lng').value);
+            const capacity = parseInt(document.getElementById('loc-capacity').value);
+            const price    = parseFloat(document.getElementById('loc-rate').value);
+
+            if (!name || !address || isNaN(lat) || isNaN(lng) || isNaN(capacity) || isNaN(price)) {
+                toast('Please fill all required fields', 'error'); return;
+            }
+            try {
+                if (editingLocationId) {
+                    await LocationAPI.update(editingLocationId, { name, address, latitude: lat, longitude: lng, capacity, pricePerHour: price });
+                    toast('Location updated successfully');
+                } else {
+                    await LocationAPI.create({ name, address, latitude: lat, longitude: lng, capacity, pricePerHour: price, ownerId: user.id });
+                    toast('Location added successfully');
+                }
+                document.getElementById('location-form').style.display = 'none';
+                resetLocationForm();
+                loadLocations();
+                refreshExistingPins();
+            } catch (e) { toast(e.message, 'error'); }
+        }
+
+        async function toggleActive(id, el) {
+            try {
+                const updated = await LocationAPI.toggleActive(id);
+                el.textContent = updated.active ? 'Active' : 'Inactive';
+                el.className = `slot-badge ${updated.active ? 'slot-open' : 'slot-full'}`;
+            } catch (e) { toast(e.message, 'error'); }
+        }
+
+        function showConfirm(title, message, onConfirm, { okLabel = 'Delete', okClass = 'btn-danger' } = {}) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-msg').innerHTML    = message;
+            const modal     = document.getElementById('confirm-modal');
+            const okBtn     = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+            okBtn.textContent = okLabel;
+            okBtn.className   = `btn ${okClass}`;
+            okBtn.style.flex  = '1';
+            modal.classList.add('open');
+            function close() {
+                modal.classList.remove('open');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+                modal.removeEventListener('click', handleBackdrop);
+            }
+            function handleOk()       { close(); onConfirm(); }
+            function handleCancel()   { close(); }
+            function handleBackdrop(e){ if (e.target === modal) close(); }
+            okBtn.addEventListener('click', handleOk);
+            cancelBtn.addEventListener('click', handleCancel);
+            modal.addEventListener('click', handleBackdrop);
+        }
+
+        function showLocationError(msg) {
+            const existing = document.getElementById('loc-delete-error');
+            if (existing) existing.remove();
+            const el = document.createElement('div');
+            el.id = 'loc-delete-error';
+            el.innerHTML = `
+                <div style="display:flex;align-items:flex-start;gap:14px;
+                            background:rgba(255,71,87,0.07);border:1px solid rgba(255,71,87,0.25);
+                            border-radius:16px;padding:18px 20px;margin-top:12px;">
+                    <div style="width:38px;height:38px;background:rgba(255,71,87,0.15);border-radius:50%;
+                                display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                                font-size:18px;line-height:1;">⚠</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;color:var(--danger);font-size:13px;margin-bottom:5px;
+                                    font-family:'Syne',sans-serif;">Cannot Delete Location</div>
+                        <div style="color:var(--text-muted);font-size:12px;line-height:1.5;">${msg}</div>
+                        <div style="margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.5;">
+                            Click <span style="color:var(--warning);font-weight:600;">Slots</span> on that row to open the slot manager, then delete all slots before removing the location.
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('loc-delete-error').remove()"
+                            style="background:none;border:none;color:var(--text-dim);cursor:pointer;
+                                   font-size:20px;padding:0;flex-shrink:0;line-height:1;margin-top:-2px;">×</button>
+                </div>`;
+            const tableCard = document.querySelector('#locations-panel .card');
+            tableCard.insertAdjacentElement('afterend', el);
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(() => { const e = document.getElementById('loc-delete-error'); if (e) e.remove(); }, 10000);
+        }
+
+        function deleteLocation(id) {
+            const loc = currentLocations.find(l => l.id === id);
+            const locName = loc ? loc.name : 'this location';
+            showConfirm(
+                'Delete Location',
+                `Are you sure you want to delete "${locName}"? All associated data will be permanently removed.`,
+                async () => {
+                    const existing = document.getElementById('loc-delete-error');
+                    if (existing) existing.remove();
+                    try {
+                        await LocationAPI.delete(id);
+                        toast('Location deleted');
+                        loadLocations();
+                    } catch (e) { showLocationError(e.message); }
+                }
+            );
+        }
+
+        // ── SLOTS ──────────────────────────────────────────────────────────────
+
+        function manageSlots(locationId, name, address) {
+            selectedLocationId = locationId;
+            document.getElementById('slots-location-name').textContent = name;
+            document.getElementById('slots-location-address').textContent = address;
+            document.getElementById('locations-panel').style.display = 'none';
+            document.getElementById('slots-panel').style.display = 'block';
+            loadSlots(locationId);
+        }
+
+        function closeSlots() {
+            document.getElementById('slots-panel').style.display = 'none';
+            document.getElementById('locations-panel').style.display = 'block';
+            selectedLocationId = null;
+            currentSlots = [];
+            loadLocations(); // refresh available counts when returning
+        }
+
+        async function loadSlots(locationId) {
+            document.getElementById('slots-tbody').innerHTML =
+                '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted)">Loading slots...</td></tr>';
+            try {
+                const slots = await SlotAPI.getByLocation(locationId);
+                currentSlots = slots || [];
+                renderSlots(slots);
+            } catch (e) {
+                document.getElementById('slots-tbody').innerHTML =
+                    `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--danger)">${e.message}</td></tr>`;
+            }
+        }
+
+        function renderSlots(slots) {
+            const tbody = document.getElementById('slots-tbody');
+            if (!slots || slots.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted)">No slots yet. Add the first slot for this location.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = slots.map(s => {
+                const occupied = s.status === 'OCCUPIED';
+                const inactive = s.status === 'INACTIVE';
+                const toggleLabel = inactive ? 'Activate' : 'Deactivate';
+                const toggleColor = inactive ? 'var(--accent)' : 'var(--warning)';
+                const toggleBtn = occupied
+                    ? `<button class="btn btn-sm" disabled title="Cannot change: slot is occupied"
+                           style="background:var(--surface3);color:var(--text-dim);border:none;cursor:not-allowed;">
+                           Deactivate
+                       </button>`
+                    : `<button class="btn btn-sm"
+                           style="background:rgba(255,176,32,0.12);color:${toggleColor};border:1px solid ${toggleColor}33;"
+                           onclick="ownerSlots.toggleSlotActive(${s.id},'${s.status}')">
+                           ${toggleLabel}
+                       </button>`;
+                return `
+                <tr>
+                    <td style="font-family:'DM Mono',monospace;font-weight:600">${s.slotNumber}</td>
+                    <td>${vehicleLabels[s.vehicleType] || s.vehicleType || '—'}</td>
+                    <td>${statusBadge[s.status] || s.status}</td>
+                    <td style="text-align:center">
+                        <div style="display:flex;gap:4px;justify-content:center;">
+                            ${toggleBtn}
+                            <button class="btn btn-danger btn-sm" onclick="ownerSlots.deleteSlot(${s.id})">Delete</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function submitSlot() {
+            if (!selectedLocationId) return;
+            const slotNumber  = document.getElementById('slot-number').value.trim().toUpperCase();
+            const vehicleType = document.getElementById('slot-vehicle-type').value;
+            if (!slotNumber) { toast('Please enter a slot number', 'error'); return; }
+
+            // Duplicate check against cached slots
+            const duplicate = currentSlots.some(s => s.slotNumber.toUpperCase() === slotNumber);
+            if (duplicate) { toast(`Slot "${slotNumber}" already exists in this location`, 'error'); return; }
+
+            try {
+                await SlotAPI.create({ slotNumber, vehicleType, status: 'AVAILABLE', locationId: selectedLocationId });
+                toast('Slot added');
+                toggleForm('slot-form');
+                document.getElementById('slot-number').value = '';
+                await loadSlots(selectedLocationId);
+                loadLocations(); // refresh available count in locations table
+            } catch (e) { toast(e.message, 'error'); }
+        }
+
+        function toggleSlotActive(id, currentStatus) {
+            if (currentStatus === 'OCCUPIED') {
+                toast('Cannot change status of an occupied slot', 'error'); return;
+            }
+            const newStatus = currentStatus === 'INACTIVE' ? 'AVAILABLE' : 'INACTIVE';
+            const slot = currentSlots.find(s => s.id === id);
+            const slotLabel = slot ? `Slot ${slot.slotNumber}` : 'this slot';
+            const action = newStatus === 'AVAILABLE' ? 'Activate' : 'Deactivate';
+            const okClass = newStatus === 'AVAILABLE' ? 'btn-success' : 'btn-danger';
+            showConfirm(
+                `${action} Slot`,
+                `Are you sure you want to ${action.toLowerCase()} <strong>${slotLabel}</strong>?`,
+                async () => {
+                    try {
+                        await SlotAPI.updateStatus(id, newStatus);
+                        toast(`Slot ${newStatus === 'INACTIVE' ? 'deactivated' : 'activated'}`);
+                        await loadSlots(selectedLocationId);
+                        loadLocations();
+                    } catch (e) { toast(e.message, 'error'); }
+                },
+                { okLabel: action, okClass }
+            );
+        }
+
+        function deleteSlot(id) {
+            const slot = currentSlots.find(s => s.id === id);
+            const slotLabel = slot ? `Slot ${slot.slotNumber}` : 'this slot';
+            showConfirm(
+                'Delete Slot',
+                `Are you sure you want to permanently delete <strong>${slotLabel}</strong>? This action cannot be undone.`,
+                async () => {
+                    try {
+                        await SlotAPI.delete(id);
+                        toast('Slot deleted');
+                        await loadSlots(selectedLocationId);
+                        loadLocations();
+                    } catch (e) { toast(e.message, 'error'); }
+                }
+            );
+        }
+
+        function setMapTheme(isLight) {
+            if (map) map.setOptions({ styles: isLight ? [] : DARK_MAP_STYLES });
+        }
+
+        return { loadLocations, toggleForm, submitLocation, toggleActive, deleteLocation,
+                 editLocation, manageSlots, closeSlots, submitSlot, toggleSlotActive, deleteSlot, checkLocForm, setMapTheme };
+    })();
+</script>
+</body>
+</html>
