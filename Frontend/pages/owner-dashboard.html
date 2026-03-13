@@ -61,9 +61,8 @@
             <button class="nav-item" onclick="showView('owner-slots', this)">
                 <span class="nav-icon">🅿</span> Parking Slots
             </button>
-            <button class="nav-item" onclick="showView('owner-requests', this)">
+            <button class="nav-item" onclick="showView('owner-requests', this); loadAppointmentRequests();">
                 <span class="nav-icon">📨</span> Requests
-                <span class="badge danger">3</span>
             </button>
             <button class="nav-item" onclick="showView('owner-scan', this)">
                 <span class="nav-icon">📷</span> Scan QR
@@ -93,12 +92,7 @@
                 <div class="topbar-subtitle" id="topbar-date"></div>
             </div>
             <div class="topbar-right">
-                <div class="search-box">
-                    <span>🔍</span>
-                    <input type="text" placeholder="Search bookings, slots...">
-                </div>
                 <div class="icon-btn" id="theme-toggle-btn" title="Toggle day/night mode">🌙</div>
-                <div class="icon-btn">🔔</div>
                 <div class="gear-wrapper">
                     <div class="icon-btn" id="gear-btn">⚙</div>
                     <div class="gear-dropdown" id="gear-dropdown">
@@ -354,7 +348,7 @@
                         <div class="card-body" style="padding:0;">
                             <table class="slots-table">
                                 <thead>
-                                <tr><th>Slot #</th><th>Vehicle Type</th><th>Status</th><th style="text-align:center">Actions</th></tr>
+                                <tr><th>Slot #</th><th>Vehicle Type</th><th>Status</th><th>Booking Schedule</th><th style="text-align:center">Actions</th></tr>
                                 </thead>
                                 <tbody id="slots-tbody">
                                 <tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading slots...</td></tr>
@@ -397,48 +391,42 @@
 
             <!-- ========== OWNER REQUESTS ========== -->
             <div id="owner-requests" class="view">
-                <div style="margin-bottom:20px;">
-                    <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">Appointment Requests</div>
-                    <div style="font-size:12px;color:var(--text-muted);">Review and manage incoming booking requests</div>
-                </div>
-                <div class="approval-card">
-                    <div class="approval-header"><div class="approval-title">Kasun Madushan</div><div class="approval-time">2 min ago</div></div>
-                    <div class="approval-details">CBC 1234 · Blue Toyota Aqua · Car</div>
-                    <div class="approval-meta">
-                        <div class="meta-chip">🅿 Slot A-14</div><div class="meta-chip">📅 Mar 06, 2026</div>
-                        <div class="meta-chip">⏰ 14:00–17:00</div><div class="meta-chip">⏱ 3 hours</div>
-                        <div class="meta-chip">💰 300 LKR</div>
-                        <div class="meta-chip" style="color:var(--accent)">Commission: 60 LKR</div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="btn btn-primary" style="flex:1">✓ Accept</button>
-                        <button class="btn btn-danger" style="flex:1">✕ Reject</button>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
+                    <div>
+                        <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">Appointment Requests</div>
+                        <div style="font-size:12px;color:var(--text-muted);">Review and manage incoming booking requests</div>
                     </div>
                 </div>
-                <div class="approval-card">
-                    <div class="approval-header"><div class="approval-title">Malith Perera</div><div class="approval-time">15 min ago</div></div>
-                    <div class="approval-details">WP 5542 · Red Honda Civic · Car</div>
-                    <div class="approval-meta">
-                        <div class="meta-chip">🅿 Slot B-03</div><div class="meta-chip">📅 Mar 06, 2026</div>
-                        <div class="meta-chip">⏰ 16:00–19:00</div><div class="meta-chip">⏱ 3 hours</div>
-                        <div class="meta-chip">💰 300 LKR</div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="btn btn-primary" style="flex:1">✓ Accept</button>
-                        <button class="btn btn-danger" style="flex:1">✕ Reject</button>
+                <div class="tabs" id="requests-tabs" style="margin-bottom:20px;">
+                    <button class="tab-btn active" data-tab="pending" onclick="switchRequestTab(this)">📨 Pending</button>
+                    <button class="tab-btn"         data-tab="history" onclick="switchRequestTab(this)">📋 Request History</button>
+                </div>
+
+                <!-- Pending requests cards -->
+                <div id="requests-list">
+                    <div style="text-align:center;padding:40px 0;color:var(--text-muted);">
+                        <div style="font-size:32px;margin-bottom:10px;">📋</div>
+                        <div style="font-size:13px;">Loading requests…</div>
                     </div>
                 </div>
-                <div class="approval-card">
-                    <div class="approval-header"><div class="approval-title">Nishani Fernando</div><div class="approval-time">1h ago</div></div>
-                    <div class="approval-details">WP 7823 · Black Honda CB150 · Bike</div>
-                    <div class="approval-meta">
-                        <div class="meta-chip">🅿 Slot B-10</div><div class="meta-chip">📅 Mar 07, 2026</div>
-                        <div class="meta-chip">⏰ 09:00–11:00</div><div class="meta-chip">⏱ 2 hours</div>
-                        <div class="meta-chip">💰 100 LKR</div>
-                    </div>
-                    <div class="approval-actions">
-                        <button class="btn btn-primary" style="flex:1">✓ Accept</button>
-                        <button class="btn btn-danger" style="flex:1">✕ Reject</button>
+
+                <!-- Request history table (hidden by default) -->
+                <div id="requests-history" style="display:none;">
+                    <div class="card">
+                        <div class="card-body" style="padding:0;">
+                            <table class="slots-table">
+                                <thead>
+                                <tr>
+                                    <th>Booking ID</th><th>Driver</th><th>Vehicle</th>
+                                    <th>Slot · Location</th><th>Date & Time</th>
+                                    <th>Duration</th><th>Amount</th><th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody id="history-tbody">
+                                    <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">Loading history…</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -578,6 +566,7 @@
 <script src="../js/api/auth.api.js"></script>
 <script src="../js/api/location.api.js"></script>
 <script src="../js/api/slot.api.js"></script>
+<script src="../js/api/appointment.api.js"></script>
 <script>
     // ── Session & UI init ──────────────────────────────────────────────────────
     (function () {
@@ -637,6 +626,141 @@
     }
     loadDashboardStats();
 
+    // ── Appointment Requests ───────────────────────────────────────────────────
+    async function loadAppointmentRequests() {
+        const user = getCurrentUser();
+        const list = document.getElementById('requests-list');
+        list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);"><div style="font-size:32px;margin-bottom:10px;">📋</div><div style="font-size:13px;">Loading requests…</div></div>';
+
+        try {
+            const appointments = await AppointmentAPI.getByOwner(user.id);
+            const pending = appointments.filter(a => a.status === 'PENDING');
+
+            if (pending.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:48px 0;color:var(--text-muted);"><div style="font-size:36px;margin-bottom:12px;">✅</div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">No pending requests</div><div style="font-size:12px;">All caught up! New requests will appear here.</div></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            pending.forEach(a => {
+                const start   = a.startTime ? new Date(a.startTime) : null;
+                const end     = a.endTime   ? new Date(a.endTime)   : null;
+                const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—';
+                const startT  = start ? start.toTimeString().slice(0, 5) : '—';
+                const endT    = end   ? end.toTimeString().slice(0, 5)   : '—';
+                const durH    = a.duration ? (a.duration / 60).toFixed(1).replace('.0', '') : '—';
+                const ago     = a.createdAt ? timeAgo(new Date(a.createdAt)) : '';
+                const vehDetail = [a.vehicleNumber, a.vehicleColor, a.vehicleModel, a.vehicleType].filter(Boolean).join(' · ');
+
+                const card = document.createElement('div');
+                card.className = 'approval-card';
+                card.innerHTML = `
+                    <div class="approval-header">
+                        <div class="approval-title">${a.driverFirstName || ''} ${a.driverLastName || ''}</div>
+                        <div class="approval-time">${ago}</div>
+                    </div>
+                    <div class="approval-details">${vehDetail}</div>
+                    <div class="approval-meta">
+                        <div class="meta-chip">🅿 Slot ${a.slotNumber || '—'}</div>
+                        <div class="meta-chip">📍 ${a.locationName || '—'}</div>
+                        <div class="meta-chip">📅 ${dateStr}</div>
+                        <div class="meta-chip">⏰ ${startT}–${endT}</div>
+                        <div class="meta-chip">⏱ ${durH} h</div>
+                        <div class="meta-chip">💰 ${a.totalAmount ? Math.round(a.totalAmount) + ' LKR' : '—'}</div>
+                        <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+                            <button class="btn btn-primary btn-sm" onclick="handleAppointment(${a.id}, 'ACTIVE')">✓ Accept</button>
+                            <button class="btn btn-danger btn-sm"  onclick="handleAppointment(${a.id}, 'REJECTED')">✕ Reject</button>
+                        </div>
+                    </div>`;
+                list.appendChild(card);
+            });
+        } catch (e) {
+            list.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--danger);font-size:13px;">Failed to load requests: ${e.message}</div>`;
+        }
+    }
+
+    async function handleAppointment(id, status) {
+        try {
+            await AppointmentAPI.updateStatus(id, status);
+            showOwnerToast(status === 'ACTIVE' ? 'Request accepted! Slot marked as occupied.' : 'Request rejected.');
+            loadAppointmentRequests();
+        } catch (e) {
+            showOwnerToast('Failed to update: ' + (e.message || 'Unknown error'), 'error');
+        }
+    }
+
+    function switchRequestTab(btn) {
+        document.querySelectorAll('#requests-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.getElementById('requests-list').style.display    = tab === 'pending'  ? '' : 'none';
+        document.getElementById('requests-history').style.display = tab === 'history' ? '' : 'none';
+        if (tab === 'history') loadRequestHistory();
+    }
+
+    async function loadRequestHistory() {
+        const user  = getCurrentUser();
+        const tbody = document.getElementById('history-tbody');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">Loading…</td></tr>';
+
+        try {
+            const appointments = await AppointmentAPI.getByOwner(user.id);
+            const history = appointments.filter(a => a.status !== 'PENDING');
+
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No history yet.</td></tr>';
+                return;
+            }
+
+            const statusClass = { ACTIVE: 'status-active', COMPLETED: 'status-completed', REJECTED: 'status-rejected', CANCELLED: 'status-rejected' };
+            const statusLabel = { ACTIVE: 'Accepted', COMPLETED: 'Completed', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+
+            tbody.innerHTML = history.map(a => {
+                const start   = a.startTime ? new Date(a.startTime) : null;
+                const end     = a.endTime   ? new Date(a.endTime)   : null;
+                const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) : '—';
+                const timeStr = (start && end) ? start.toTimeString().slice(0,5) + '–' + end.toTimeString().slice(0,5) : '—';
+                const durH    = a.duration ? (a.duration / 60).toFixed(1).replace('.0','') + 'h' : '—';
+                const driverName = [a.driverFirstName, a.driverLastName].filter(Boolean).join(' ') || '—';
+                const veh     = [a.vehicleNumber, a.vehicleColor, a.vehicleModel].filter(Boolean).join(' · ') || '—';
+                const loc     = [a.slotNumber, a.locationName].filter(Boolean).join(' · ') || '—';
+                const pill    = `<span class="status-pill ${statusClass[a.status] || ''}">${statusLabel[a.status] || a.status}</span>`;
+                return `<tr>
+                    <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">${a.bookingCode || '—'}</span></td>
+                    <td>${driverName}</td>
+                    <td style="font-size:12px;">${veh}</td>
+                    <td style="font-size:12px;">${loc}</td>
+                    <td style="font-size:12px;">${dateStr} · ${timeStr}</td>
+                    <td>${durH}</td>
+                    <td style="font-family:'DM Mono',monospace;">${a.totalAmount != null ? Math.round(a.totalAmount) + ' LKR' : '—'}</td>
+                    <td>${pill}</td>
+                </tr>`;
+            }).join('');
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--danger);">Failed to load history: ${e.message}</td></tr>`;
+        }
+    }
+
+    function timeAgo(date) {
+        const mins = Math.floor((Date.now() - date) / 60000);
+        if (mins < 1)  return 'just now';
+        if (mins < 60) return mins + ' min ago';
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24)  return hrs + 'h ago';
+        return Math.floor(hrs / 24) + 'd ago';
+    }
+
+    function showOwnerToast(msg, type = 'success') {
+        const el = document.createElement('div');
+        el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+            border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+            background:${type === 'success' ? 'var(--accent)' : 'var(--danger)'};
+            color:${type === 'success' ? '#000' : '#fff'};`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
+
     // ── Intercept showView to load locations when tab opens ───────────────────
     (function () {
         const _orig = window.showView;
@@ -644,6 +768,7 @@
             if (typeof _orig === 'function') _orig(id, btn);
             if (id === 'owner-slots')     ownerSlots.loadLocations();
             if (id === 'owner-dashboard') loadDashboardStats();
+            if (id === 'owner-requests')  loadAppointmentRequests();
         };
     })();
 
@@ -1084,43 +1209,81 @@
 
         async function loadSlots(locationId) {
             document.getElementById('slots-tbody').innerHTML =
-                '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted)">Loading slots...</td></tr>';
+                '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading slots...</td></tr>';
             try {
-                const slots = await SlotAPI.getByLocation(locationId);
+                const [slots, activeAppts] = await Promise.all([
+                    SlotAPI.getByLocation(locationId),
+                    AppointmentAPI.getActiveByLocation(locationId).catch(() => []),
+                ]);
                 currentSlots = slots || [];
-                renderSlots(slots);
+                // Build slotId → appointments map
+                const apptMap = {};
+                (activeAppts || []).forEach(a => {
+                    if (!apptMap[a.slotId]) apptMap[a.slotId] = [];
+                    apptMap[a.slotId].push(a);
+                });
+                renderSlots(slots, apptMap);
             } catch (e) {
                 document.getElementById('slots-tbody').innerHTML =
                     `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--danger)">${e.message}</td></tr>`;
             }
         }
 
-        function renderSlots(slots) {
+        function renderSlots(slots, apptMap) {
+            apptMap = apptMap || {};
             const tbody = document.getElementById('slots-tbody');
             if (!slots || slots.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted)">No slots yet. Add the first slot for this location.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No slots yet. Add the first slot for this location.</td></tr>';
                 return;
             }
+            const now = new Date();
             tbody.innerHTML = slots.map(s => {
-                const occupied = s.status === 'OCCUPIED';
-                const inactive = s.status === 'INACTIVE';
+                const slotAppts  = apptMap[s.id] || [];
+                const inactive   = s.status === 'INACTIVE';
+                // Dynamic occupancy: is current time within any active booking?
+                const nowOccupied = !inactive && slotAppts.some(a =>
+                    new Date(a.startTime) <= now && new Date(a.endTime) >= now);
+
+                // Status badge: dynamic
+                let statusHtml;
+                if (inactive) {
+                    statusHtml = statusBadge.INACTIVE;
+                } else if (nowOccupied) {
+                    statusHtml = statusBadge.OCCUPIED;
+                } else {
+                    statusHtml = statusBadge.AVAILABLE;
+                }
+
+                // Booking schedule chips
+                const scheduleHtml = slotAppts.length === 0 ? '<span style="color:var(--text-dim);font-size:11px;">No bookings</span>'
+                    : slotAppts.map(a => {
+                        const st = new Date(a.startTime);
+                        const en = new Date(a.endTime);
+                        const dateStr = st.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                        const timeStr = st.toTimeString().slice(0,5) + '–' + en.toTimeString().slice(0,5);
+                        const isNow   = st <= now && en >= now;
+                        return `<span style="display:inline-block;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:600;
+                                    margin:1px 2px 1px 0;
+                                    background:${isNow ? 'rgba(255,71,87,0.15)' : 'rgba(0,229,160,0.1)'};
+                                    color:${isNow ? 'var(--danger)' : 'var(--accent)'};">
+                                    ${isNow ? '● ' : ''}${dateStr} · ${timeStr}
+                                </span>`;
+                    }).join('');
+
                 const toggleLabel = inactive ? 'Activate' : 'Deactivate';
                 const toggleColor = inactive ? 'var(--accent)' : 'var(--warning)';
-                const toggleBtn = occupied
-                    ? `<button class="btn btn-sm" disabled title="Cannot change: slot is occupied"
-                           style="background:var(--surface3);color:var(--text-dim);border:none;cursor:not-allowed;">
-                           Deactivate
-                       </button>`
-                    : `<button class="btn btn-sm"
-                           style="background:rgba(255,176,32,0.12);color:${toggleColor};border:1px solid ${toggleColor}33;"
-                           onclick="ownerSlots.toggleSlotActive(${s.id},'${s.status}')">
-                           ${toggleLabel}
-                       </button>`;
+                const toggleBtn = `<button class="btn btn-sm"
+                       style="background:rgba(255,176,32,0.12);color:${toggleColor};border:1px solid ${toggleColor}33;"
+                       onclick="ownerSlots.toggleSlotActive(${s.id},'${s.status}')">
+                       ${toggleLabel}
+                   </button>`;
+
                 return `
                 <tr>
                     <td style="font-family:'DM Mono',monospace;font-weight:600">${s.slotNumber}</td>
                     <td>${vehicleLabels[s.vehicleType] || s.vehicleType || '—'}</td>
-                    <td>${statusBadge[s.status] || s.status}</td>
+                    <td>${statusHtml}</td>
+                    <td style="max-width:220px;">${scheduleHtml}</td>
                     <td style="text-align:center">
                         <div style="display:flex;gap:4px;justify-content:center;">
                             ${toggleBtn}
@@ -1152,9 +1315,6 @@
         }
 
         function toggleSlotActive(id, currentStatus) {
-            if (currentStatus === 'OCCUPIED') {
-                toast('Cannot change status of an occupied slot', 'error'); return;
-            }
             const newStatus = currentStatus === 'INACTIVE' ? 'AVAILABLE' : 'INACTIVE';
             const slot = currentSlots.find(s => s.id === id);
             const slotLabel = slot ? `Slot ${slot.slotNumber}` : 'this slot';

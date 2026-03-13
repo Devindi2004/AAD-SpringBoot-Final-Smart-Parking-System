@@ -60,4 +60,16 @@ public class VehicleServiceImpl implements VehicleService {
 
         vehicleRepository.deleteById(id);
     }
+
+    @Override
+    public List<VehicleDTO> getVehiclesByDriver(Long driverId) {
+
+        User driver = userRepository.findById(driverId)
+                .orElseThrow(() -> new ResourceNotFoundException("Driver not found"));
+
+        return vehicleRepository.findByDriver(driver)
+                .stream()
+                .map(v -> modelMapper.map(v, VehicleDTO.class))
+                .collect(Collectors.toList());
+    }
 }

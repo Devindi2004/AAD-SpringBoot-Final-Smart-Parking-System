@@ -71,12 +71,12 @@
             <button class="nav-item" onclick="showView('driver-map', this)">
                 <span class="nav-icon">🗺</span> Find Parking
             </button>
-            <button class="nav-item" onclick="showView('driver-vehicles', this)">
+            <button class="nav-item" onclick="showView('driver-vehicles', this); loadVehicles();">
                 <span class="nav-icon">🚗</span> My Vehicles
             </button>
-            <button class="nav-item" onclick="showView('driver-bookings', this)">
+            <button class="nav-item" id="nav-bookings-btn" onclick="showView('driver-bookings', this); loadBookings();">
                 <span class="nav-icon">📋</span> Bookings
-                <span class="badge">2</span>
+                <span class="badge" id="bookings-badge" style="display:none;"></span>
             </button>
             <button class="nav-item" onclick="showView('driver-qr', this)">
                 <span class="nav-icon">⬛</span> My QR Code
@@ -127,8 +127,8 @@
                     <div class="stat-card orange">
                         <div class="stat-icon">🚗</div>
                         <div class="stat-label">Registered Vehicles</div>
-                        <div class="stat-value">3</div>
-                        <div class="stat-change">2 Cars, 1 Bike</div>
+                        <div class="stat-value" id="dash-vehicle-count">—</div>
+                        <div class="stat-change" id="dash-vehicle-detail">Loading…</div>
                     </div>
                     <div class="stat-card purple">
                         <div class="stat-icon">⏱</div>
@@ -289,94 +289,72 @@
                         <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">My Vehicles</div>
                         <div style="font-size:12px;color:var(--text-muted);">Manage your registered vehicles</div>
                     </div>
-                    <button class="btn btn-primary">+ Add Vehicle</button>
+                    <button class="btn btn-primary" onclick="toggleAddVehicleForm()">+ Add Vehicle</button>
                 </div>
-                <div class="vehicle-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
-                    <div class="vehicle-card">
-                        <div class="vehicle-check">✓</div>
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                            <div class="vehicle-type-icon">🚗</div>
-                            <span class="status-pill status-active" style="font-size:10px;padding:3px 8px;">Car</span>
-                        </div>
-                        <div class="vehicle-number">CBC 1234</div>
-                        <div style="font-size:13px;font-weight:600;margin:4px 0;">Toyota Aqua</div>
-                        <div class="vehicle-detail">Blue · 2019</div>
-                        <div style="display:flex;gap:6px;margin-top:12px;">
-                            <button class="btn btn-ghost btn-sm" style="flex:1">Edit</button>
-                            <button class="btn btn-danger btn-sm" style="flex:1">Delete</button>
-                        </div>
-                    </div>
-                    <div class="vehicle-card">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                            <div class="vehicle-type-icon">🏍</div>
-                            <span class="status-pill status-active" style="font-size:10px;padding:3px 8px;">Bike</span>
-                        </div>
-                        <div class="vehicle-number">WP 7823</div>
-                        <div style="font-size:13px;font-weight:600;margin:4px 0;">Honda CB150R</div>
-                        <div class="vehicle-detail">Black · 2021</div>
-                        <div style="display:flex;gap:6px;margin-top:12px;">
-                            <button class="btn btn-ghost btn-sm" style="flex:1">Edit</button>
-                            <button class="btn btn-danger btn-sm" style="flex:1">Delete</button>
-                        </div>
-                    </div>
-                    <div class="vehicle-card">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                            <div class="vehicle-type-icon">🚐</div>
-                            <span class="status-pill status-active" style="font-size:10px;padding:3px 8px;">Van</span>
-                        </div>
-                        <div class="vehicle-number">NB 4521</div>
-                        <div style="font-size:13px;font-weight:600;margin:4px 0;">Toyota HiAce</div>
-                        <div class="vehicle-detail">White · 2017</div>
-                        <div style="display:flex;gap:6px;margin-top:12px;">
-                            <button class="btn btn-ghost btn-sm" style="flex:1">Edit</button>
-                            <button class="btn btn-danger btn-sm" style="flex:1">Delete</button>
-                        </div>
-                    </div>
-                    <div class="vehicle-card" style="border-style:dashed;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text-dim);min-height:160px;">
+
+                <!-- Vehicle cards grid -->
+                <div id="vehicle-grid" class="vehicle-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+                    <!-- Vehicles loaded dynamically; dashed add card always rendered last -->
+                    <div class="vehicle-card" id="add-vehicle-card"
+                         style="border-style:dashed;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--text-dim);min-height:160px;cursor:pointer;"
+                         onclick="toggleAddVehicleForm()">
                         <div style="font-size:32px;">+</div>
                         <div style="font-size:13px;">Add New Vehicle</div>
                     </div>
                 </div>
-                <div class="card">
+
+                <!-- Add New Vehicle inline card (hidden by default) -->
+                <div class="card" id="add-vehicle-form" style="display:none;">
                     <div class="card-header"><span>🚗</span><span class="card-title">Add New Vehicle</span></div>
                     <div class="card-body">
+                        <div id="veh-error" style="display:none;color:var(--danger);font-size:12px;margin-bottom:14px;padding:10px 12px;background:rgba(255,71,87,0.08);border-radius:8px;border:1px solid rgba(255,71,87,0.2);"></div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Vehicle Number *</label>
-                                <input class="form-control" placeholder="e.g. CBC 1234">
+                                <input id="veh-number" class="form-control" placeholder="e.g. CBC 1234" autocomplete="off">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Vehicle Type *</label>
-                                <select class="form-control"><option>Car</option><option>Bike</option><option>Van</option><option>Truck</option><option>Three-Wheeler</option></select>
+                                <select id="veh-type" class="form-control">
+                                    <option value="">Select type…</option>
+                                    <option value="CAR">Car</option>
+                                    <option value="BIKE">Bike</option>
+                                    <option value="VAN">Van</option>
+                                    <option value="TRUCK">Truck</option>
+                                    <option value="THREE_WHEELER">Three-Wheeler</option>
+                                </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Model *</label>
-                                <input class="form-control" placeholder="e.g. Toyota Aqua">
+                                <input id="veh-model" class="form-control" placeholder="e.g. Toyota Aqua">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Color</label>
-                                <input class="form-control" placeholder="e.g. Blue">
+                                <input id="veh-color" class="form-control" placeholder="e.g. Blue">
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Year</label>
-                            <input class="form-control" placeholder="e.g. 2021" style="max-width:200px">
+                            <input id="veh-year" class="form-control" type="number" placeholder="e.g. 2021" min="1990" max="2030" style="max-width:200px">
                         </div>
-                        <button class="btn btn-primary">+ Add Vehicle</button>
+                        <div style="display:flex;gap:10px;">
+                            <button class="btn btn-ghost" onclick="toggleAddVehicleForm()">Cancel</button>
+                            <button class="btn btn-primary" id="veh-submit-btn" onclick="submitVehicle()">+ Add Vehicle</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- ========== DRIVER BOOKINGS ========== -->
             <div id="driver-bookings" class="view">
-                <div class="tabs">
-                    <button class="tab-btn active">All</button>
-                    <button class="tab-btn">Active</button>
-                    <button class="tab-btn">Pending</button>
-                    <button class="tab-btn">Completed</button>
-                    <button class="tab-btn">Rejected</button>
+                <div class="tabs" id="bookings-tabs">
+                    <button class="tab-btn active" data-filter="ALL"       onclick="filterBookings(this)">All</button>
+                    <button class="tab-btn"         data-filter="ACTIVE"    onclick="filterBookings(this)">Active</button>
+                    <button class="tab-btn"         data-filter="PENDING"   onclick="filterBookings(this)">Pending</button>
+                    <button class="tab-btn"         data-filter="COMPLETED" onclick="filterBookings(this)">Completed</button>
+                    <button class="tab-btn"         data-filter="REJECTED"  onclick="filterBookings(this)">Rejected</button>
                 </div>
                 <div class="card">
                     <div class="card-body" style="padding:0;">
@@ -388,39 +366,8 @@
                                 <th>Status</th><th>Actions</th>
                             </tr>
                             </thead>
-                            <tbody>
-                            <tr>
-                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0381</span></td>
-                                <td>Majestic City · A-14</td><td>CBC 1234</td>
-                                <td style="font-size:12px;">Mar 06 · 14:00–17:00</td>
-                                <td>3h</td><td style="font-family:'DM Mono',monospace;">300 LKR</td>
-                                <td><span class="status-pill status-active">Active</span></td>
-                                <td><button class="btn btn-ghost btn-sm">View QR</button></td>
-                            </tr>
-                            <tr>
-                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0380</span></td>
-                                <td>One Galle Face · B-02</td><td>WP 7823</td>
-                                <td style="font-size:12px;">Mar 05 · 10:00–12:00</td>
-                                <td>2h</td><td style="font-family:'DM Mono',monospace;">100 LKR</td>
-                                <td><span class="status-pill status-pending">Pending</span></td>
-                                <td><button class="btn btn-danger btn-sm">Cancel</button></td>
-                            </tr>
-                            <tr>
-                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0375</span></td>
-                                <td>Liberty Plaza · C-08</td><td>CBC 1234</td>
-                                <td style="font-size:12px;">Mar 03 · 09:00–14:00</td>
-                                <td>5h</td><td style="font-family:'DM Mono',monospace;">450 LKR</td>
-                                <td><span class="status-pill status-completed">Completed</span></td>
-                                <td><button class="btn btn-ghost btn-sm">Receipt</button></td>
-                            </tr>
-                            <tr>
-                                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0360</span></td>
-                                <td>Colombo City · D-03</td><td>NB 4521</td>
-                                <td style="font-size:12px;">Feb 28 · 13:00–15:00</td>
-                                <td>2h</td><td style="font-family:'DM Mono',monospace;">200 LKR</td>
-                                <td><span class="status-pill status-rejected">Rejected</span></td>
-                                <td><button class="btn btn-ghost btn-sm">Rebook</button></td>
-                            </tr>
+                            <tbody id="bookings-tbody">
+                            <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">Loading bookings…</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -514,6 +461,16 @@
         <input type="hidden" id="booking-slot-id">
         <input type="hidden" id="booking-price-rate">
 
+        <!-- Existing bookings for this slot -->
+        <div id="modal-slot-schedule" style="display:none;background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.18);border-radius:10px;padding:10px 12px;margin-bottom:14px;"></div>
+
+        <div class="form-group">
+            <label class="form-label">Select Vehicle *</label>
+            <select id="booking-vehicle-id" class="form-control">
+                <option value="">Loading vehicles…</option>
+            </select>
+        </div>
+
         <div class="form-group">
             <label class="form-label">Date</label>
             <input type="date" class="form-control" id="booking-date" oninput="calcBookingPrice()">
@@ -528,6 +485,9 @@
                 <input type="time" class="form-control" id="booking-end" value="11:00" oninput="calcBookingPrice()">
             </div>
         </div>
+
+        <!-- Date-specific availability hint (shows blocked + available windows) -->
+        <div id="modal-date-hint" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;"></div>
 
         <div class="price-display">
             <div class="price-row"><span>Duration</span><span id="modal-duration">—</span></div>
@@ -550,6 +510,8 @@
 <script src="../js/api/auth.api.js"></script>
 <script src="../js/api/location.api.js"></script>
 <script src="../js/api/slot.api.js"></script>
+<script src="../js/api/vehicle.api.js"></script>
+<script src="../js/api/appointment.api.js"></script>
 <script>
     (function () {
         const user = getCurrentUser();
@@ -743,6 +705,13 @@
         if (id === 'driver-dashboard' && nearbyMap) {
             setTimeout(function () { google.maps.event.trigger(nearbyMap, 'resize'); }, 80);
         }
+        if (id === 'driver-map' && selectedLocation) {
+            // Re-fetch slot availability whenever the map view is shown (picks up owner accept/reject)
+            setTimeout(function () { selectLocation(selectedLocation); }, 120);
+        }
+        if (id === 'driver-bookings') {
+            loadBookings();
+        }
     };
 
     // ── Load & place location markers ─────────────────────────────────────────
@@ -782,6 +751,10 @@
         });
     }
 
+    // ── Slot appointments map (slotId → active appointments[]) ───────────────
+    let slotAppointmentsMap = {};
+    let currentSlotAppointments = [];   // active bookings for the slot currently in modal
+
     // ── Location click → populate slot panel ──────────────────────────────────
     async function selectLocation(loc) {
         selectedLocation = loc;
@@ -796,42 +769,78 @@
             <div class="card-body" style="flex:1;overflow-y:auto;padding:16px;">
                 <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">${loc.address}</div>
                 <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
-                    <span style="background:rgba(0,229,160,0.1);color:var(--accent);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;">
-                        ${loc.availableSlots} Available
-                    </span>
                     <span style="background:rgba(255,176,32,0.1);color:var(--warning);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;">
                         ${loc.pricePerHour} LKR / h
                     </span>
                 </div>
-                <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Available Slots</div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.05em;">Slots</div>
                 <div id="slot-list"><div style="text-align:center;padding:24px;color:var(--text-muted);">Loading slots…</div></div>
             </div>`;
 
         try {
-            const slots = await SlotAPI.getByLocation(loc.id);
-            const available = slots.filter(s => s.status === 'AVAILABLE');
-            const slotList = document.getElementById('slot-list');
+            // Fetch slots and active bookings in parallel
+            const [slots, activeAppts] = await Promise.all([
+                SlotAPI.getByLocation(loc.id),
+                AppointmentAPI.getActiveByLocation(loc.id).catch(() => []),
+            ]);
+
+            // Build slotId → appointments map
+            slotAppointmentsMap = {};
+            activeAppts.forEach(a => {
+                if (!slotAppointmentsMap[a.slotId]) slotAppointmentsMap[a.slotId] = [];
+                slotAppointmentsMap[a.slotId].push(a);
+            });
+
+            // Show all non-inactive slots — occupancy is time-based, not a DB flag
+            const available = slots.filter(s => s.status !== 'INACTIVE');
+            const slotList  = document.getElementById('slot-list');
             if (!slotList) return;
 
             if (available.length === 0) {
-                slotList.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger);">No available slots at this location.</div>`;
+                slotList.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger);">No active slots at this location.</div>`;
                 return;
             }
 
             const vehicleIcons = { CAR:'🚗', BIKE:'🏍', VAN:'🚐', TRUCK:'🚛', THREE_WHEELER:'🛺' };
-            slotList.innerHTML = available.map(slot => `
-                <div class="slot-item">
-                    <div>
-                        <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:15px;color:var(--accent);">${slot.slotNumber}</div>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${vehicleIcons[slot.vehicleType] || '🚘'} ${slot.vehicleType || '—'}</div>
+            const now = new Date();
+
+            slotList.innerHTML = available.map(slot => {
+                const appts      = slotAppointmentsMap[slot.id] || [];
+                const nowOccupied = appts.some(a => new Date(a.startTime) <= now && new Date(a.endTime) >= now);
+
+                // Booked time chips (future + ongoing)
+                const chips = appts.map(a => {
+                    const s = new Date(a.startTime);
+                    const e = new Date(a.endTime);
+                    const dateStr = s.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    const timeStr = s.toTimeString().slice(0,5) + '–' + e.toTimeString().slice(0,5);
+                    return `<span style="display:inline-block;background:rgba(255,71,87,0.12);color:var(--danger);
+                                border-radius:6px;padding:2px 8px;font-size:10px;font-weight:600;margin:2px 2px 0 0;">
+                                📅 ${dateStr} · ${timeStr}
+                            </span>`;
+                }).join('');
+
+                return `
+                <div class="slot-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:15px;color:var(--accent);">${slot.slotNumber}</div>
+                            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${vehicleIcons[slot.vehicleType] || '🚘'} ${slot.vehicleType || '—'}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            ${nowOccupied ? '<div style="font-size:10px;font-weight:700;color:var(--danger);margin-bottom:4px;">● Occupied Now</div>' : '<div style="font-size:10px;font-weight:700;color:var(--accent);margin-bottom:4px;">● Available Now</div>'}
+                            <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${loc.pricePerHour} LKR/h</div>
+                            <button class="btn btn-primary btn-sm" onclick="openBookingModal(${slot.id},'${slot.slotNumber}',${loc.pricePerHour})">
+                                Request Slot
+                            </button>
+                        </div>
                     </div>
-                    <div style="text-align:right;">
-                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">${loc.pricePerHour} LKR/h</div>
-                        <button class="btn btn-primary btn-sm" onclick="openBookingModal(${slot.id},'${slot.slotNumber}',${loc.pricePerHour})">
-                            Request Slot
-                        </button>
-                    </div>
-                </div>`).join('');
+                    ${appts.length > 0 ? `<div style="padding-top:4px;border-top:1px solid var(--border);">
+                        <div style="font-size:10px;color:var(--text-muted);margin-bottom:3px;">BOOKED TIMES:</div>
+                        <div>${chips}</div>
+                    </div>` : ''}
+                </div>`;
+            }).join('');
         } catch (e) {
             const sl = document.getElementById('slot-list');
             if (sl) sl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--danger);">${e.message}</div>`;
@@ -839,7 +848,9 @@
     }
 
     // ── Booking modal ──────────────────────────────────────────────────────────
-    function openBookingModal(slotId, slotNumber, pricePerHour) {
+    async function openBookingModal(slotId, slotNumber, pricePerHour) {
+        currentSlotAppointments = slotAppointmentsMap[slotId] || [];
+
         document.getElementById('modal-slot-number').textContent   = slotNumber;
         document.getElementById('modal-location-name').textContent = selectedLocation ? selectedLocation.name : '';
         document.getElementById('modal-price-rate').textContent    = pricePerHour + ' LKR/h';
@@ -848,6 +859,42 @@
         document.getElementById('booking-price-rate').value        = pricePerHour;
         document.getElementById('booking-date').value              = new Date().toISOString().split('T')[0];
         document.getElementById('booking-error').style.display     = 'none';
+        document.getElementById('modal-date-hint').style.display   = 'none';
+
+        // Show existing booked times for this slot in the modal
+        const scheduleEl = document.getElementById('modal-slot-schedule');
+        if (scheduleEl) {
+            if (currentSlotAppointments.length > 0) {
+                const lines = currentSlotAppointments.map(a => {
+                    const s = new Date(a.startTime);
+                    const e = new Date(a.endTime);
+                    const dateStr = s.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                    return `${dateStr} · ${s.toTimeString().slice(0,5)}–${e.toTimeString().slice(0,5)}`;
+                }).join('<br>');
+                scheduleEl.innerHTML = `<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">Already booked:</div>
+                    <div style="font-size:11px;color:var(--danger);font-weight:600;">${lines}</div>`;
+                scheduleEl.style.display = 'block';
+            } else {
+                scheduleEl.style.display = 'none';
+            }
+        }
+
+        // Populate vehicle selector
+        const vehicleSel = document.getElementById('booking-vehicle-id');
+        vehicleSel.innerHTML = '<option value="">Loading…</option>';
+        try {
+            const user     = getCurrentUser();
+            const vehicles = await VehicleAPI.getByDriver(user.id);
+            if (vehicles.length === 0) {
+                vehicleSel.innerHTML = '<option value="">No vehicles registered — add one first</option>';
+            } else {
+                vehicleSel.innerHTML = '<option value="">Select your vehicle…</option>' +
+                    vehicles.map(v => `<option value="${v.id}">${v.vehicleNumber} — ${v.model} (${v.color || ''})</option>`).join('');
+            }
+        } catch (e) {
+            vehicleSel.innerHTML = '<option value="">Failed to load vehicles</option>';
+        }
+
         calcBookingPrice();
         document.getElementById('booking-modal').classList.add('open');
     }
@@ -856,48 +903,153 @@
         document.getElementById('booking-modal').classList.remove('open');
     }
 
+    // Returns sorted bookings on the given date (yyyy-mm-dd) for the current slot
+    function bookingsOnDate(date) {
+        if (!date || !currentSlotAppointments.length) return [];
+        return currentSlotAppointments
+            .filter(a => new Date(a.startTime).toISOString().slice(0, 10) === date)
+            .slice()
+            .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    }
+
+    // Computes free time windows for a date given sorted booked ranges
+    function freeWindows(sorted) {
+        const windows = [];
+        let cursor = '00:00';
+        sorted.forEach(a => {
+            const bs = new Date(a.startTime).toTimeString().slice(0, 5);
+            const be = new Date(a.endTime).toTimeString().slice(0, 5);
+            if (cursor < bs) windows.push(cursor + '–' + bs);
+            if (be > cursor) cursor = be;
+        });
+        if (cursor < '23:59') windows.push(cursor + '–23:59');
+        return windows;
+    }
+
     function calcBookingPrice() {
-        const start = document.getElementById('booking-start').value;
-        const end   = document.getElementById('booking-end').value;
-        const rate  = parseFloat(document.getElementById('booking-price-rate').value) || 0;
-        if (!start || !end) return;
+        const start  = document.getElementById('booking-start').value;
+        const end    = document.getElementById('booking-end').value;
+        const date   = document.getElementById('booking-date').value;
+        const rate   = parseFloat(document.getElementById('booking-price-rate').value) || 0;
+        const errEl  = document.getElementById('booking-error');
+        const hintEl = document.getElementById('modal-date-hint');
+
+        // ── Date-specific availability hint ──────────────────────────────────
+        const dateBookings = bookingsOnDate(date);
+        if (hintEl) {
+            if (dateBookings.length > 0) {
+                const blocked  = dateBookings.map(a =>
+                    new Date(a.startTime).toTimeString().slice(0,5) + '–' + new Date(a.endTime).toTimeString().slice(0,5)
+                ).join(', ');
+                const free     = freeWindows(dateBookings);
+                const freeStr  = free.length ? free.join(', ') : 'None';
+                hintEl.innerHTML = `
+                    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                        <div>
+                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">⛔ Blocked</div>
+                            <div style="font-size:12px;color:var(--danger);font-weight:700;">${blocked}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;">✅ Available</div>
+                            <div style="font-size:12px;color:var(--accent);font-weight:700;">${freeStr}</div>
+                        </div>
+                    </div>`;
+                hintEl.style.display = 'block';
+            } else {
+                hintEl.style.display = 'none';
+            }
+        }
+
+        // ── Price / conflict calculation ──────────────────────────────────────
+        if (!start || !end) {
+            document.getElementById('modal-price-total').textContent = '—';
+            document.getElementById('modal-duration').textContent    = '—';
+            return;
+        }
         const mins = (end.split(':')[0] * 60 + +end.split(':')[1]) - (start.split(':')[0] * 60 + +start.split(':')[1]);
-        if (mins <= 0) { document.getElementById('modal-price-total').textContent = '—'; return; }
+        if (mins <= 0) {
+            document.getElementById('modal-price-total').textContent = '—';
+            document.getElementById('modal-duration').textContent    = '—';
+            errEl.style.display = 'none';
+            return;
+        }
+
+        // Overlap check
+        if (date && currentSlotAppointments.length > 0) {
+            const newStart = new Date(`${date}T${start}:00`);
+            const newEnd   = new Date(`${date}T${end}:00`);
+            const conflict = currentSlotAppointments.find(a => {
+                return newStart < new Date(a.endTime) && newEnd > new Date(a.startTime);
+            });
+            if (conflict) {
+                const cs = new Date(conflict.startTime).toTimeString().slice(0,5);
+                const ce = new Date(conflict.endTime).toTimeString().slice(0,5);
+                errEl.textContent = `Time conflict: slot is already booked ${cs}–${ce}. Select an available window above.`;
+                errEl.style.display = 'block';
+                document.getElementById('modal-price-total').textContent = '—';
+                document.getElementById('modal-duration').textContent    = '—';
+                return;
+            }
+        }
+        errEl.style.display = 'none';
+
         const hours = mins / 60;
         document.getElementById('modal-duration').textContent    = hours.toFixed(1) + ' h';
         document.getElementById('modal-price-total').textContent = Math.round(hours * rate) + ' LKR';
     }
 
     async function submitBooking() {
-        const user = getCurrentUser();
+        const user      = getCurrentUser();
         const slotId    = parseInt(document.getElementById('booking-slot-id').value);
+        const vehicleId = parseInt(document.getElementById('booking-vehicle-id').value);
         const date      = document.getElementById('booking-date').value;
         const start     = document.getElementById('booking-start').value;
         const end       = document.getElementById('booking-end').value;
+        const rate      = parseFloat(document.getElementById('booking-price-rate').value) || 0;
         const errEl     = document.getElementById('booking-error');
 
+        if (!vehicleId) {
+            errEl.textContent = 'Please select a vehicle.';
+            errEl.style.display = 'block'; return;
+        }
         if (!date || !start || !end) {
             errEl.textContent = 'Please fill in all fields.';
-            errEl.style.display = 'block';
-            return;
+            errEl.style.display = 'block'; return;
         }
         const mins = (end.split(':')[0] * 60 + +end.split(':')[1]) - (start.split(':')[0] * 60 + +start.split(':')[1]);
         if (mins <= 0) {
             errEl.textContent = 'End time must be after start time.';
-            errEl.style.display = 'block';
-            return;
+            errEl.style.display = 'block'; return;
+        }
+
+        // Final client-side conflict guard before sending to server
+        if (currentSlotAppointments.length > 0) {
+            const newStart = new Date(`${date}T${start}:00`);
+            const newEnd   = new Date(`${date}T${end}:00`);
+            const conflict = currentSlotAppointments.find(a =>
+                newStart < new Date(a.endTime) && newEnd > new Date(a.startTime)
+            );
+            if (conflict) {
+                const cs = new Date(conflict.startTime).toTimeString().slice(0,5);
+                const ce = new Date(conflict.endTime).toTimeString().slice(0,5);
+                errEl.textContent = `Cannot submit: slot is already booked ${cs}–${ce}.`;
+                errEl.style.display = 'block'; return;
+            }
         }
         errEl.style.display = 'none';
 
+        const hours       = mins / 60;
+        const totalAmount = Math.round(hours * rate);
+
         try {
-            await apiFetch('/api/appointments', {
-                method: 'POST',
-                body: JSON.stringify({
-                    driverId: user.id, slotId,
-                    startTime: `${date}T${start}:00`,
-                    endTime:   `${date}T${end}:00`,
-                    status: 'PENDING',
-                }),
+            await AppointmentAPI.create({
+                driverId:    user.id,
+                slotId,
+                vehicleId,
+                startTime:   `${date}T${start}:00`,
+                endTime:     `${date}T${end}:00`,
+                duration:    mins,
+                totalAmount,
             });
             closeBookingModal();
             showDriverToast('Booking request submitted successfully!');
@@ -923,6 +1075,214 @@
     document.getElementById('booking-modal').addEventListener('click', function (e) {
         if (e.target === this) closeBookingModal();
     });
+
+    // ── Vehicle management ────────────────────────────────────────────────────
+    const VEHICLE_ICONS  = { CAR: '🚗', BIKE: '🏍', VAN: '🚐', TRUCK: '🚛', THREE_WHEELER: '🛺' };
+    const VEHICLE_LABELS = { CAR: 'Car', BIKE: 'Bike', VAN: 'Van', TRUCK: 'Truck', THREE_WHEELER: 'Three-Wheeler' };
+
+    function toggleAddVehicleForm() {
+        const form = document.getElementById('add-vehicle-form');
+        const isHidden = form.style.display === 'none';
+        form.style.display = isHidden ? 'block' : 'none';
+        if (isHidden) {
+            // Reset form fields and errors when opening
+            document.getElementById('veh-number').value = '';
+            document.getElementById('veh-type').value   = '';
+            document.getElementById('veh-model').value  = '';
+            document.getElementById('veh-color').value  = '';
+            document.getElementById('veh-year').value   = '';
+            document.getElementById('veh-error').style.display = 'none';
+            const btn = document.getElementById('veh-submit-btn');
+            btn.disabled = false;
+            btn.textContent = '+ Add Vehicle';
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    async function submitVehicle() {
+        const user   = getCurrentUser();
+        const number = document.getElementById('veh-number').value.trim();
+        const type   = document.getElementById('veh-type').value;
+        const model  = document.getElementById('veh-model').value.trim();
+        const color  = document.getElementById('veh-color').value.trim();
+        const year   = parseInt(document.getElementById('veh-year').value);
+        const errEl  = document.getElementById('veh-error');
+
+        if (!number || !type || !model) {
+            errEl.textContent = 'Vehicle Number, Type, and Model are required.';
+            errEl.style.display = 'block';
+            return;
+        }
+        errEl.style.display = 'none';
+
+        const btn = document.getElementById('veh-submit-btn');
+        btn.disabled = true;
+        btn.textContent = 'Saving…';
+
+        try {
+            await VehicleAPI.create({
+                vehicleNumber: number,
+                type,
+                model,
+                color,
+                year: isNaN(year) ? 0 : year,
+                driverId: user.id,
+            });
+            document.getElementById('add-vehicle-form').style.display = 'none';
+            showDriverToast('Vehicle added successfully!');
+            loadVehicles();
+        } catch (e) {
+            errEl.textContent = e.message || 'Failed to add vehicle. Please try again.';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = '+ Add Vehicle';
+        }
+    }
+
+    async function deleteVehicle(id) {
+        if (!confirm('Are you sure you want to remove this vehicle?')) return;
+        try {
+            await VehicleAPI.delete(id);
+            showDriverToast('Vehicle removed.');
+            loadVehicles();
+        } catch (e) {
+            showDriverToast(e.message || 'Failed to delete vehicle.', 'error');
+        }
+    }
+
+    // ── Bookings tab ──────────────────────────────────────────────────────────
+    let _allBookings = [];
+    let _activeBookingFilter = 'ALL';
+
+    async function loadBookings() {
+        const user  = getCurrentUser();
+        const tbody = document.getElementById('bookings-tbody');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">Loading…</td></tr>';
+
+        try {
+            _allBookings = await AppointmentAPI.getByDriver(user.id);
+
+            // Update nav badge with PENDING count
+            const pendingCount = _allBookings.filter(a => a.status === 'PENDING').length;
+            const badge = document.getElementById('bookings-badge');
+            if (badge) {
+                badge.textContent = pendingCount;
+                badge.style.display = pendingCount > 0 ? '' : 'none';
+            }
+
+            renderBookingsTable(_activeBookingFilter);
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--danger);">Failed to load bookings: ${e.message || 'Unknown error'}</td></tr>`;
+        }
+    }
+
+    function filterBookings(btn) {
+        document.querySelectorAll('#bookings-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        _activeBookingFilter = btn.dataset.filter;
+        renderBookingsTable(_activeBookingFilter);
+    }
+
+    function renderBookingsTable(filter) {
+        const tbody = document.getElementById('bookings-tbody');
+        const rows  = filter === 'ALL' ? _allBookings : _allBookings.filter(a => a.status === filter);
+
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No bookings found.</td></tr>`;
+            return;
+        }
+
+        const statusClass = { PENDING: 'status-pending', ACTIVE: 'status-active', COMPLETED: 'status-completed', REJECTED: 'status-rejected', CANCELLED: 'status-rejected' };
+        const statusLabel = { PENDING: 'Pending', ACTIVE: 'Active', COMPLETED: 'Completed', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+
+        tbody.innerHTML = rows.map(a => {
+            const start  = a.startTime ? new Date(a.startTime) : null;
+            const end    = a.endTime   ? new Date(a.endTime)   : null;
+            const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) : '—';
+            const timeStr = (start && end)
+                ? start.toTimeString().slice(0,5) + '–' + end.toTimeString().slice(0,5)
+                : '—';
+            const durH = a.duration ? (a.duration / 60).toFixed(1) + 'h' : '—';
+            const loc  = [a.locationName, a.slotNumber].filter(Boolean).join(' · ') || '—';
+            const pill = `<span class="status-pill ${statusClass[a.status] || ''}">${statusLabel[a.status] || a.status}</span>`;
+
+            let action = '';
+            if (a.status === 'PENDING') {
+                action = `<button class="btn btn-danger btn-sm" onclick="cancelBooking(${a.id})">Cancel</button>`;
+            } else if (a.status === 'ACTIVE') {
+                action = `<button class="btn btn-ghost btn-sm">View QR</button>`;
+            } else if (a.status === 'COMPLETED') {
+                action = `<button class="btn btn-ghost btn-sm">Receipt</button>`;
+            }
+
+            return `<tr>
+                <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">${a.bookingCode || '—'}</span></td>
+                <td>${loc}</td>
+                <td>${a.vehicleNumber || '—'}</td>
+                <td style="font-size:12px;">${dateStr} · ${timeStr}</td>
+                <td>${durH}</td>
+                <td style="font-family:'DM Mono',monospace;">${a.totalAmount != null ? a.totalAmount + ' LKR' : '—'}</td>
+                <td>${pill}</td>
+                <td>${action}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function cancelBooking(id) {
+        if (!confirm('Cancel this booking request?')) return;
+        try {
+            await AppointmentAPI.updateStatus(id, 'CANCELLED');
+            showDriverToast('Booking cancelled.');
+            loadBookings();
+        } catch (e) {
+            showDriverToast(e.message || 'Failed to cancel booking.', 'error');
+        }
+    }
+
+    async function loadVehicles() {
+        const user    = getCurrentUser();
+        const grid    = document.getElementById('vehicle-grid');
+        const addCard = document.getElementById('add-vehicle-card');
+
+        // Remove previously rendered vehicle cards (keep the dashed add card)
+        [...grid.querySelectorAll('.vehicle-card:not(#add-vehicle-card)')].forEach(el => el.remove());
+
+        try {
+            const vehicles = await VehicleAPI.getByDriver(user.id);
+
+            // Update dashboard stat card
+            const countEl  = document.getElementById('dash-vehicle-count');
+            const detailEl = document.getElementById('dash-vehicle-detail');
+            if (countEl) countEl.textContent = vehicles.length;
+            if (detailEl) {
+                const typeCounts = {};
+                vehicles.forEach(v => { typeCounts[v.type] = (typeCounts[v.type] || 0) + 1; });
+                detailEl.textContent = Object.entries(typeCounts)
+                    .map(([t, n]) => `${n} ${VEHICLE_LABELS[t] || t}`)
+                    .join(', ') || 'No vehicles yet';
+            }
+
+            vehicles.forEach(v => {
+                const card = document.createElement('div');
+                card.className = 'vehicle-card';
+                card.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div class="vehicle-type-icon">${VEHICLE_ICONS[v.type] || '🚘'}</div>
+                        <span class="status-pill status-active" style="font-size:10px;padding:3px 8px;">${VEHICLE_LABELS[v.type] || v.type}</span>
+                    </div>
+                    <div class="vehicle-number">${v.vehicleNumber}</div>
+                    <div style="font-size:13px;font-weight:600;margin:4px 0;">${v.model}</div>
+                    <div class="vehicle-detail">${v.color ? v.color + ' · ' : ''}${v.year || '—'}</div>
+                    <div style="display:flex;gap:6px;margin-top:12px;">
+                        <button class="btn btn-danger btn-sm" style="flex:1" onclick="deleteVehicle(${v.id})">Delete</button>
+                    </div>`;
+                grid.insertBefore(card, addCard);
+            });
+        } catch (e) {
+            console.error('Could not load vehicles', e);
+            showDriverToast('Failed to load vehicles: ' + (e.message || 'Unknown error'), 'error');
+        }
+    }
 </script>
 </body>
 </html>

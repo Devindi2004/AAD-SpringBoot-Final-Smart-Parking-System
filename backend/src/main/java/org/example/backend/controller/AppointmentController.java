@@ -30,6 +30,26 @@ public class AppointmentController {
         return appointmentService.getAppointmentById(id);
     }
 
+    @GetMapping("/owner/{ownerId}")
+    public List<AppointmentDTO> getByOwner(@PathVariable Long ownerId) {
+        return appointmentService.getAppointmentsByOwner(ownerId);
+    }
+
+    @GetMapping("/driver/{driverId}")
+    public List<AppointmentDTO> getByDriver(@PathVariable Long driverId) {
+        return appointmentService.getAppointmentsByDriver(driverId);
+    }
+
+    @GetMapping("/location/{locationId}/active")
+    public List<AppointmentDTO> getActiveByLocation(@PathVariable Long locationId) {
+        return appointmentService.getActiveAppointmentsByLocation(locationId);
+    }
+
+    @PatchMapping("/{id}/status")
+    public AppointmentDTO updateStatus(@PathVariable Long id, @RequestParam String status) {
+        return appointmentService.updateStatus(id, status);
+    }
+
     @DeleteMapping("/{id}")
     public void deleteAppointment(@PathVariable Long id) {
         appointmentService.deleteAppointment(id);

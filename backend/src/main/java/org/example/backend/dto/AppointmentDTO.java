@@ -14,8 +14,20 @@ public class AppointmentDTO {
     private double totalAmount;
     private double commission;
     private String status;
+    private LocalDateTime createdAt;
     private Long driverId;
     private Long slotId;
     private Long vehicleId;
+
+    // Display fields — populated by the service, not required on create
+    private String driverFirstName;
+    private String driverLastName;
+    private String vehicleNumber;
+    private String vehicleModel;
+    private String vehicleColor;
+    private String vehicleType;
+    private String slotNumber;
+    private String locationName;
+    private double pricePerHour;
 
 }

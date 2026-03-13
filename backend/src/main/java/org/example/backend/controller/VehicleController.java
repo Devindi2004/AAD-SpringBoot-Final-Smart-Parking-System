@@ -30,6 +30,11 @@ public class VehicleController {
         return vehicleService.getVehicleById(id);
     }
 
+    @GetMapping("/driver/{driverId}")
+    public List<VehicleDTO> getVehiclesByDriver(@PathVariable Long driverId) {
+        return vehicleService.getVehiclesByDriver(driverId);
+    }
+
     @DeleteMapping("/{id}")
     public void deleteVehicle(@PathVariable Long id) {
         vehicleService.deleteVehicle(id);

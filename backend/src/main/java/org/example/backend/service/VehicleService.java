@@ -14,4 +14,6 @@ public interface VehicleService {
 
     void deleteVehicle(Long id);
 
+    List<VehicleDTO> getVehiclesByDriver(Long driverId);
+
 }

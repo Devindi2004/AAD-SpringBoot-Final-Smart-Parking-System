@@ -14,4 +14,12 @@ public interface AppointmentService {
 
     void deleteAppointment(Long id);
 
+    List<AppointmentDTO> getAppointmentsByOwner(Long ownerId);
+
+    List<AppointmentDTO> getAppointmentsByDriver(Long driverId);
+
+    AppointmentDTO updateStatus(Long id, String status);
+
+    List<AppointmentDTO> getActiveAppointmentsByLocation(Long locationId);
+
 }
