@@ -121,8 +121,8 @@
                     <div class="stat-card">
                         <div class="stat-icon">📋</div>
                         <div class="stat-label">Active Bookings</div>
-                        <div class="stat-value">2</div>
-                        <div class="stat-change"><span class="up">↑ 1</span> from last week</div>
+                        <div class="stat-value" id="dash-active-bookings">—</div>
+                        <div class="stat-change" id="dash-active-detail">Loading…</div>
                     </div>
                     <div class="stat-card orange">
                         <div class="stat-icon">🚗</div>
@@ -133,14 +133,14 @@
                     <div class="stat-card purple">
                         <div class="stat-icon">⏱</div>
                         <div class="stat-label">Total Hours Parked</div>
-                        <div class="stat-value">47h</div>
-                        <div class="stat-change"><span class="up">↑ 12%</span> this month</div>
+                        <div class="stat-value" id="dash-hours-parked">—</div>
+                        <div class="stat-change" id="dash-hours-detail">Loading…</div>
                     </div>
                     <div class="stat-card red">
                         <div class="stat-icon">💸</div>
                         <div class="stat-label">Amount Spent</div>
-                        <div class="stat-value">4,250</div>
-                        <div class="stat-change">LKR this month</div>
+                        <div class="stat-value" id="dash-amount-spent">—</div>
+                        <div class="stat-change" id="dash-amount-detail">LKR this month</div>
                     </div>
                 </div>
 
@@ -157,58 +157,8 @@
                     <div style="display:flex;flex-direction:column;gap:16px;">
                         <div class="card">
                             <div class="card-header"><span>📋</span><span class="card-title">Active Booking</span></div>
-                            <div class="qr-card">
-                                <div class="qr-wrapper">
-                                    <div class="qr-corners"></div>
-                                    <svg class="qr-code-svg" viewBox="0 0 100 100">
-                                        <rect fill="#fff" width="100" height="100"/>
-                                        <rect fill="#000" x="5" y="5" width="25" height="25"/>
-                                        <rect fill="#fff" x="8" y="8" width="19" height="19"/>
-                                        <rect fill="#000" x="11" y="11" width="13" height="13"/>
-                                        <rect fill="#000" x="70" y="5" width="25" height="25"/>
-                                        <rect fill="#fff" x="73" y="8" width="19" height="19"/>
-                                        <rect fill="#000" x="76" y="11" width="13" height="13"/>
-                                        <rect fill="#000" x="5" y="70" width="25" height="25"/>
-                                        <rect fill="#fff" x="8" y="73" width="19" height="19"/>
-                                        <rect fill="#000" x="11" y="76" width="13" height="13"/>
-                                        <rect fill="#000" x="35" y="5" width="5" height="5"/>
-                                        <rect fill="#000" x="45" y="5" width="5" height="5"/>
-                                        <rect fill="#000" x="55" y="5" width="5" height="5"/>
-                                        <rect fill="#000" x="35" y="15" width="5" height="5"/>
-                                        <rect fill="#000" x="50" y="15" width="5" height="5"/>
-                                        <rect fill="#000" x="60" y="15" width="5" height="5"/>
-                                        <rect fill="#000" x="35" y="35" width="5" height="5"/>
-                                        <rect fill="#000" x="45" y="35" width="5" height="5"/>
-                                        <rect fill="#000" x="55" y="35" width="5" height="5"/>
-                                        <rect fill="#000" x="65" y="35" width="5" height="5"/>
-                                        <rect fill="#000" x="35" y="45" width="5" height="5"/>
-                                        <rect fill="#000" x="50" y="45" width="5" height="5"/>
-                                        <rect fill="#000" x="70" y="45" width="5" height="5"/>
-                                        <rect fill="#000" x="80" y="45" width="5" height="5"/>
-                                        <rect fill="#000" x="90" y="45" width="5" height="5"/>
-                                        <rect fill="#000" x="35" y="55" width="5" height="5"/>
-                                        <rect fill="#000" x="45" y="55" width="5" height="5"/>
-                                        <rect fill="#000" x="60" y="55" width="5" height="5"/>
-                                        <rect fill="#000" x="35" y="65" width="5" height="5"/>
-                                        <rect fill="#000" x="55" y="65" width="5" height="5"/>
-                                        <rect fill="#000" x="70" y="65" width="5" height="5"/>
-                                        <rect fill="#000" x="80" y="65" width="5" height="5"/>
-                                        <rect fill="#000" x="45" y="75" width="5" height="5"/>
-                                        <rect fill="#000" x="55" y="75" width="5" height="5"/>
-                                        <rect fill="#000" x="75" y="75" width="5" height="5"/>
-                                        <rect fill="#000" x="90" y="75" width="5" height="5"/>
-                                        <rect fill="#000" x="35" y="85" width="5" height="5"/>
-                                        <rect fill="#000" x="50" y="85" width="5" height="5"/>
-                                        <rect fill="#000" x="65" y="85" width="5" height="5"/>
-                                        <rect fill="#000" x="85" y="85" width="5" height="5"/>
-                                    </svg>
-                                </div>
-                                <div class="qr-id">BOOKING #PS-2024-0381</div>
-                                <div class="qr-booking">Slot A-14, Majestic City Parking</div>
-                                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">14:00 – 17:00 · CBC1234 · Blue Toyota</div>
-                                <div style="margin-top:12px;">
-                                    <span class="status-pill status-active">● Active</span>
-                                </div>
+                            <div id="active-booking-card-body" class="card-body" style="text-align:center;padding:28px 16px;">
+                                <div style="color:var(--text-muted);font-size:13px;">Loading…</div>
                             </div>
                         </div>
                     </div>
@@ -216,40 +166,8 @@
 
                 <div class="card">
                     <div class="card-header"><span>📅</span><span class="card-title">Recent Bookings</span></div>
-                    <div class="card-body">
-                        <div class="booking-item" style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);">
-                            <div style="width:36px;height:36px;background:rgba(0,229,160,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">🅿</div>
-                            <div style="flex:1">
-                                <div style="font-size:13px;font-weight:600;">Majestic City Parking · Slot A-14</div>
-                                <div style="font-size:11px;color:var(--text-muted);">Mar 06, 2026 · 14:00 – 17:00 · CBC1234 · 3h</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'DM Mono',monospace">300 LKR</div>
-                                <span class="status-pill status-active">Active</span>
-                            </div>
-                        </div>
-                        <div class="booking-item" style="display:flex;align-items:center;gap:14px;padding:10px 0;border-bottom:1px solid var(--border);">
-                            <div style="width:36px;height:36px;background:rgba(255,176,32,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">🅿</div>
-                            <div style="flex:1">
-                                <div style="font-size:13px;font-weight:600;">One Galle Face · Slot B-02</div>
-                                <div style="font-size:11px;color:var(--text-muted);">Mar 05, 2026 · 10:00 – 12:00 · WP 7823 · 2h</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'DM Mono',monospace">100 LKR</div>
-                                <span class="status-pill status-pending">Pending</span>
-                            </div>
-                        </div>
-                        <div class="booking-item" style="display:flex;align-items:center;gap:14px;padding:10px 0;">
-                            <div style="width:36px;height:36px;background:rgba(108,99,255,0.1);border-radius:10px;display:flex;align-items:center;justify-content:center;">🅿</div>
-                            <div style="flex:1">
-                                <div style="font-size:13px;font-weight:600;">Liberty Plaza · Slot C-08</div>
-                                <div style="font-size:11px;color:var(--text-muted);">Mar 03, 2026 · 09:00 – 14:00 · CBC1234 · 5h</div>
-                            </div>
-                            <div style="text-align:right;">
-                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'DM Mono',monospace">450 LKR</div>
-                                <span class="status-pill status-completed">Completed</span>
-                            </div>
-                        </div>
+                    <div class="card-body" id="recent-bookings-list" style="padding:0 16px;">
+                        <div style="text-align:center;padding:24px;color:var(--text-muted);">Loading…</div>
                     </div>
                 </div>
             </div>
@@ -363,7 +281,7 @@
                             <tr>
                                 <th>Booking ID</th><th>Location</th><th>Vehicle</th>
                                 <th>Date & Time</th><th>Duration</th><th>Amount</th>
-                                <th>Status</th><th>Actions</th>
+                                <th>Status</th><th>Payment</th><th>Actions</th>
                             </tr>
                             </thead>
                             <tbody id="bookings-tbody">
@@ -504,6 +422,19 @@
     </div>
 </div>
 
+<!-- ========== QR CODE MODAL ========== -->
+<div id="qr-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:18px;padding:28px 24px;width:320px;text-align:center;position:relative;">
+        <button onclick="closeQRModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;color:var(--text-muted);cursor:pointer;">✕</button>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Booking QR Code</div>
+        <div id="qr-booking-code" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);margin-bottom:16px;"></div>
+        <div id="qr-canvas-container" style="display:flex;justify-content:center;margin-bottom:16px;"></div>
+        <div id="qr-booking-detail" style="font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.6;"></div>
+        <button id="qr-download-btn" class="btn btn-primary" style="width:100%;">⬇ Download QR</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="../js/script.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/api/api.config.js"></script>
@@ -512,6 +443,7 @@
 <script src="../js/api/slot.api.js"></script>
 <script src="../js/api/vehicle.api.js"></script>
 <script src="../js/api/appointment.api.js"></script>
+<script src="../js/api/transaction.api.js"></script>
 <script>
     (function () {
         const user = getCurrentUser();
@@ -525,6 +457,15 @@
 
     document.getElementById('topbar-date').textContent =
         new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: '2-digit' });
+
+    // Redirect back to bookings tab if coming from payment gateway
+    (function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab') === 'bookings') {
+            const bookingsBtn = document.querySelector('[onclick*="driver-bookings"]');
+            if (bookingsBtn) bookingsBtn.click();
+        }
+    })();
 
     // ── Dark map style ─────────────────────────────────────────────────────────
     const DARK_MAP_STYLES = [
@@ -702,8 +643,9 @@
                 }
             }, 80);
         }
-        if (id === 'driver-dashboard' && nearbyMap) {
-            setTimeout(function () { google.maps.event.trigger(nearbyMap, 'resize'); }, 80);
+        if (id === 'driver-dashboard') {
+            loadDriverDashboard();
+            if (nearbyMap) setTimeout(function () { google.maps.event.trigger(nearbyMap, 'resize'); }, 80);
         }
         if (id === 'driver-map' && selectedLocation) {
             // Re-fetch slot availability whenever the map view is shown (picks up owner accept/reject)
@@ -1206,11 +1148,22 @@
             const loc  = [a.locationName, a.slotNumber].filter(Boolean).join(' · ') || '—';
             const pill = `<span class="status-pill ${statusClass[a.status] || ''}">${statusLabel[a.status] || a.status}</span>`;
 
+            const isPaid = a.paymentStatus === 'PAID';
+            const paymentCell = isPaid
+                ? `<span class="status-pill status-active" style="font-size:11px;">✓ Paid</span>`
+                : (a.status === 'ACTIVE'
+                    ? `<span class="status-pill status-pending" style="font-size:11px;">Pending</span>`
+                    : `<span style="font-size:11px;color:var(--text-muted)">—</span>`);
+
             let action = '';
             if (a.status === 'PENDING') {
                 action = `<button class="btn btn-danger btn-sm" onclick="cancelBooking(${a.id})">Cancel</button>`;
             } else if (a.status === 'ACTIVE') {
-                action = `<button class="btn btn-ghost btn-sm">View QR</button>`;
+                if (!isPaid) {
+                    action = `<button class="btn btn-primary btn-sm" onclick="goToPayment(${a.id})">Make Payment</button>`;
+                } else {
+                    action = `<button class="btn btn-ghost btn-sm" onclick="openQRModal(${a.id}, '${a.bookingCode || ''}', '${a.locationName || ''}', '${a.slotNumber || ''}', '${a.vehicleNumber || ''}', '${dateStr}', '${timeStr}')">View QR</button>`;
+                }
             } else if (a.status === 'COMPLETED') {
                 action = `<button class="btn btn-ghost btn-sm">Receipt</button>`;
             }
@@ -1223,6 +1176,7 @@
                 <td>${durH}</td>
                 <td style="font-family:'DM Mono',monospace;">${a.totalAmount != null ? a.totalAmount + ' LKR' : '—'}</td>
                 <td>${pill}</td>
+                <td>${paymentCell}</td>
                 <td>${action}</td>
             </tr>`;
         }).join('');
@@ -1237,6 +1191,10 @@
         } catch (e) {
             showDriverToast(e.message || 'Failed to cancel booking.', 'error');
         }
+    }
+
+    function goToPayment(appointmentId) {
+        window.location.href = `payment-gateway.html?appointmentId=${appointmentId}`;
     }
 
     async function loadVehicles() {
@@ -1283,6 +1241,178 @@
             showDriverToast('Failed to load vehicles: ' + (e.message || 'Unknown error'), 'error');
         }
     }
+
+    // ── QR Code Modal ─────────────────────────────────────────────────────────
+    function openQRModal(appointmentId, bookingCode, locationName, slotNumber, vehicleNumber, dateStr, timeStr) {
+        const overlay = document.getElementById('qr-modal-overlay');
+        overlay.style.display = 'flex';
+
+        document.getElementById('qr-booking-code').textContent = bookingCode;
+        document.getElementById('qr-booking-detail').innerHTML =
+            `📍 ${locationName} · Slot ${slotNumber}<br>🚗 ${vehicleNumber}<br>📅 ${dateStr} · ${timeStr}`;
+
+        // Clear previous QR
+        const container = document.getElementById('qr-canvas-container');
+        container.innerHTML = '';
+
+        const qr = new QRCode(container, {
+            text: String(appointmentId),
+            width: 200,
+            height: 200,
+            colorDark: '#000000',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.H,
+        });
+
+        // Wire download button after QR renders
+        document.getElementById('qr-download-btn').onclick = function () {
+            setTimeout(() => {
+                const img = container.querySelector('img');
+                const canvas = container.querySelector('canvas');
+                const src = (img && img.src) || (canvas && canvas.toDataURL('image/png'));
+                if (!src) return;
+                const a = document.createElement('a');
+                a.href = src;
+                a.download = `ParkSmart-${bookingCode}.png`;
+                a.click();
+            }, 100);
+        };
+    }
+
+    function closeQRModal() {
+        document.getElementById('qr-modal-overlay').style.display = 'none';
+    }
+
+    // ── Driver Dashboard Stats ────────────────────────────────────────────────
+    function driverFmt(val) {
+        return Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    const STATUS_CLASS = { PENDING: 'status-pending', ACTIVE: 'status-active', COMPLETED: 'status-completed', REJECTED: 'status-rejected', CANCELLED: 'status-rejected' };
+    const STATUS_LABEL = { PENDING: 'Pending', ACTIVE: 'Active', COMPLETED: 'Completed', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+    const STATUS_COLOR = { ACTIVE: 'rgba(0,229,160,0.1)', PENDING: 'rgba(255,176,32,0.1)', COMPLETED: 'rgba(108,99,255,0.1)', REJECTED: 'rgba(255,71,87,0.1)', CANCELLED: 'rgba(255,71,87,0.1)' };
+
+    async function loadDriverDashboard() {
+        const user = getCurrentUser();
+        if (!user) return;
+
+        let appointments = [];
+        try {
+            appointments = await AppointmentAPI.getByDriver(user.id);
+        } catch (e) {
+            console.error('Failed to load driver appointments', e);
+        }
+
+        // ── Active Bookings tile ──────────────────────────────────────────────
+        const activeAppts = appointments.filter(a => a.status === 'ACTIVE');
+        document.getElementById('dash-active-bookings').textContent = activeAppts.length;
+        document.getElementById('dash-active-detail').textContent   =
+            activeAppts.length === 0 ? 'No active bookings' : 'currently active';
+
+        // ── Total Hours Parked tile (COMPLETED only) ──────────────────────────
+        const totalMinutes = appointments
+            .filter(a => a.status === 'COMPLETED')
+            .reduce((s, a) => s + (a.duration || 0), 0);
+        const totalHours = (totalMinutes / 60).toFixed(1);
+        document.getElementById('dash-hours-parked').textContent = totalHours + 'h';
+        document.getElementById('dash-hours-detail').textContent =
+            totalMinutes === 0 ? 'No completed bookings yet' : 'from completed bookings';
+
+        // ── Amount Spent this month (PAID appointments) ───────────────────────
+        const now = new Date();
+        const monthlySpent = appointments
+            .filter(a => {
+                if (a.paymentStatus !== 'PAID' || !a.startTime) return false;
+                const d = new Date(a.startTime);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            })
+            .reduce((s, a) => s + (a.totalAmount || 0), 0);
+        document.getElementById('dash-amount-spent').textContent = driverFmt(monthlySpent);
+        document.getElementById('dash-amount-detail').textContent = 'LKR this month';
+
+        // ── Active Booking card (most recently created ACTIVE) ────────────────
+        const cardBody = document.getElementById('active-booking-card-body');
+        if (activeAppts.length === 0) {
+            cardBody.innerHTML = `
+                <div style="text-align:center;padding:28px 16px;color:var(--text-muted);">
+                    <div style="font-size:36px;margin-bottom:10px;">🅿</div>
+                    <div style="font-size:13px;">No active bookings right now.</div>
+                    <button class="btn btn-primary btn-sm" style="margin-top:14px;"
+                        onclick="document.querySelector('[onclick*=driver-map]').click()">Find Parking →</button>
+                </div>`;
+        } else {
+            const a = activeAppts.sort((x, y) => new Date(y.createdAt) - new Date(x.createdAt))[0];
+            const start   = a.startTime ? new Date(a.startTime) : null;
+            const end     = a.endTime   ? new Date(a.endTime)   : null;
+            const timeStr = (start && end) ? start.toTimeString().slice(0,5) + ' – ' + end.toTimeString().slice(0,5) : '—';
+            const veh     = [a.vehicleNumber, a.vehicleColor, a.vehicleModel].filter(Boolean).join(' · ') || '—';
+
+            cardBody.innerHTML = `
+                <div class="qr-card">
+                    <div id="dash-active-qr" style="width:160px;height:160px;margin:0 auto 12px;border-radius:10px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center;"></div>
+                    <div class="qr-id">BOOKING #${a.bookingCode || '—'}</div>
+                    <div class="qr-booking">Slot ${a.slotNumber || '—'}, ${a.locationName || '—'}</div>
+                    <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">${timeStr} · ${veh}</div>
+                    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                        <span class="status-pill status-active">● Active</span>
+                        ${a.paymentStatus === 'PAID'
+                            ? `<span class="status-pill status-active" style="font-size:11px;">✓ Paid</span>`
+                            : `<button class="btn btn-primary btn-sm" onclick="goToPayment(${a.id})">Make Payment</button>`}
+                    </div>
+                </div>`;
+
+            // Generate real QR
+            setTimeout(() => {
+                const qrContainer = document.getElementById('dash-active-qr');
+                if (qrContainer && typeof QRCode !== 'undefined') {
+                    new QRCode(qrContainer, {
+                        text: String(a.id),
+                        width: 160, height: 160,
+                        colorDark: '#000000', colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.M,
+                    });
+                }
+            }, 100);
+        }
+
+        // ── Recent Bookings list (last 3 by createdAt) ────────────────────────
+        const listEl = document.getElementById('recent-bookings-list');
+        if (appointments.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);">No bookings yet.</div>`;
+            return;
+        }
+
+        const recent = appointments
+            .slice()
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 3);
+
+        listEl.innerHTML = recent.map((a, idx) => {
+            const start   = a.startTime ? new Date(a.startTime) : null;
+            const end     = a.endTime   ? new Date(a.endTime)   : null;
+            const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—';
+            const timeStr = (start && end) ? start.toTimeString().slice(0,5) + '–' + end.toTimeString().slice(0,5) : '—';
+            const durH    = a.duration ? (a.duration / 60).toFixed(1) + 'h' : '—';
+            const isLast  = idx === recent.length - 1;
+            return `
+                <div style="display:flex;align-items:center;gap:14px;padding:10px 0;${isLast ? '' : 'border-bottom:1px solid var(--border);'}">
+                    <div style="width:36px;height:36px;background:${STATUS_COLOR[a.status] || 'rgba(255,255,255,0.05)'};border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">🅿</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                            ${a.locationName || '—'} · Slot ${a.slotNumber || '—'}
+                        </div>
+                        <div style="font-size:11px;color:var(--text-muted);">${dateStr} · ${timeStr} · ${a.vehicleNumber || '—'} · ${durH}</div>
+                    </div>
+                    <div style="text-align:right;flex-shrink:0;">
+                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;font-family:'DM Mono',monospace">${a.totalAmount != null ? driverFmt(a.totalAmount) + ' LKR' : '—'}</div>
+                        <span class="status-pill ${STATUS_CLASS[a.status] || ''}">${STATUS_LABEL[a.status] || a.status}</span>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    // Load dashboard on startup
+    loadDriverDashboard();
 </script>
 </body>
 </html>

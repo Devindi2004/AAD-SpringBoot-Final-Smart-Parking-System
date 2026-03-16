@@ -116,20 +116,20 @@
                     <div class="stat-card orange">
                         <div class="stat-icon">📋</div>
                         <div class="stat-label">Today's Bookings</div>
-                        <div class="stat-value">11</div>
-                        <div class="stat-change"><span class="up">↑ 3</span> from yesterday</div>
+                        <div class="stat-value" id="dash-today-bookings">—</div>
+                        <div class="stat-change" id="dash-today-detail">Loading...</div>
                     </div>
                     <div class="stat-card purple">
                         <div class="stat-icon">📨</div>
                         <div class="stat-label">Pending Requests</div>
-                        <div class="stat-value">3</div>
-                        <div class="stat-change" style="color:var(--danger)">Needs attention</div>
+                        <div class="stat-value" id="dash-pending-count">—</div>
+                        <div class="stat-change" id="dash-pending-detail" style="color:var(--danger)">Loading...</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">💰</div>
                         <div class="stat-label">Monthly Revenue</div>
-                        <div class="stat-value">38,400</div>
-                        <div class="stat-change">LKR (after 20% fee)</div>
+                        <div class="stat-value" id="dash-monthly-revenue">—</div>
+                        <div class="stat-change" id="dash-monthly-detail">LKR net this month</div>
                     </div>
                 </div>
 
@@ -140,46 +140,46 @@
                         <div class="card-body">
                             <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;">
                                 <div>
-                                    <div style="font-size:28px;font-family:'Syne',sans-serif;font-weight:800;">48,000 <span style="font-size:14px;color:var(--text-muted);font-weight:400">LKR</span></div>
-                                    <div style="font-size:12px;color:var(--accent);">↑ 18% vs last week</div>
+                                    <div id="dash-chart-gross" style="font-size:28px;font-family:'Syne',sans-serif;font-weight:800;">— <span style="font-size:14px;color:var(--text-muted);font-weight:400">LKR</span></div>
+                                    <div style="font-size:12px;color:var(--text-muted);">Gross this week</div>
                                 </div>
-                                <div style="font-size:12px;color:var(--text-muted);">Net after 20%: <b style="color:var(--text)">38,400 LKR</b></div>
+                                <div style="font-size:12px;color:var(--text-muted);">Net after 15%: <b style="color:var(--text)" id="dash-chart-net">— LKR</b></div>
                             </div>
                             <div class="mini-chart">
-                                <div class="chart-bar" style="height:40%"><div class="bar-tip">5,200</div></div>
-                                <div class="chart-bar" style="height:65%"><div class="bar-tip">7,800</div></div>
-                                <div class="chart-bar" style="height:50%"><div class="bar-tip">6,000</div></div>
-                                <div class="chart-bar highlighted" style="height:80%"><div class="bar-tip">9,600</div></div>
-                                <div class="chart-bar" style="height:55%"><div class="bar-tip">6,600</div></div>
-                                <div class="chart-bar" style="height:70%"><div class="bar-tip">8,400</div></div>
-                                <div class="chart-bar" style="height:38%"><div class="bar-tip">4,400</div></div>
+                                <div class="chart-bar" id="dash-bar-0" style="height:4%"><div class="bar-tip">0</div></div>
+                                <div class="chart-bar" id="dash-bar-1" style="height:4%"><div class="bar-tip">0</div></div>
+                                <div class="chart-bar" id="dash-bar-2" style="height:4%"><div class="bar-tip">0</div></div>
+                                <div class="chart-bar" id="dash-bar-3" style="height:4%"><div class="bar-tip">0</div></div>
+                                <div class="chart-bar" id="dash-bar-4" style="height:4%"><div class="bar-tip">0</div></div>
+                                <div class="chart-bar" id="dash-bar-5" style="height:4%"><div class="bar-tip">0</div></div>
+                                <div class="chart-bar" id="dash-bar-6" style="height:4%"><div class="bar-tip">0</div></div>
                             </div>
                             <div style="display:flex;justify-content:space-between;margin-top:6px;padding:0 4px;">
-                                <span style="font-size:10px;color:var(--text-dim);">Mon</span>
-                                <span style="font-size:10px;color:var(--text-dim);">Tue</span>
-                                <span style="font-size:10px;color:var(--text-dim);">Wed</span>
-                                <span style="font-size:10px;color:var(--accent);font-weight:600;">Thu</span>
-                                <span style="font-size:10px;color:var(--text-dim);">Fri</span>
-                                <span style="font-size:10px;color:var(--text-dim);">Sat</span>
-                                <span style="font-size:10px;color:var(--text-dim);">Sun</span>
+                                <span class="day-label-span" style="font-size:10px;color:var(--text-dim);">Mon</span>
+                                <span class="day-label-span" style="font-size:10px;color:var(--text-dim);">Tue</span>
+                                <span class="day-label-span" style="font-size:10px;color:var(--text-dim);">Wed</span>
+                                <span class="day-label-span" style="font-size:10px;color:var(--text-dim);">Thu</span>
+                                <span class="day-label-span" style="font-size:10px;color:var(--text-dim);">Fri</span>
+                                <span class="day-label-span" style="font-size:10px;color:var(--text-dim);">Sat</span>
+                                <span class="day-label-span" style="font-size:10px;color:var(--text-dim);">Sun</span>
                             </div>
                             <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:16px;">
                                 <div class="commission-display">
                                     <div class="ring-wrap">
                                         <svg class="ring-svg" viewBox="0 0 90 90" width="90" height="90">
                                             <circle cx="45" cy="45" r="35" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
-                                            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="175 220" stroke-linecap="round"/>
-                                            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--accent3)" stroke-width="8" stroke-dasharray="44 220" stroke-dashoffset="-175" stroke-linecap="round"/>
+                                            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="187 220" stroke-linecap="round"/>
+                                            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--accent3)" stroke-width="8" stroke-dasharray="33 220" stroke-dashoffset="-187" stroke-linecap="round"/>
                                         </svg>
                                         <div class="ring-text">
-                                            <div class="ring-pct">80%</div>
+                                            <div class="ring-pct">85%</div>
                                             <div class="ring-sub">YOUR CUT</div>
                                         </div>
                                     </div>
                                     <div class="commission-details">
-                                        <div class="comm-row"><span class="comm-label">Gross Revenue</span><span class="comm-value">48,000 LKR</span></div>
-                                        <div class="comm-row"><span class="comm-label">Admin Commission (20%)</span><span class="comm-value" style="color:var(--accent3)">9,600 LKR</span></div>
-                                        <div class="comm-row"><span class="comm-label">Your Earnings (80%)</span><span class="comm-value" style="color:var(--accent)">38,400 LKR</span></div>
+                                        <div class="comm-row"><span class="comm-label">Gross Revenue</span><span class="comm-value" id="dash-ring-gross">— LKR</span></div>
+                                        <div class="comm-row"><span class="comm-label">Admin Commission (15%)</span><span class="comm-value" style="color:var(--accent3)" id="dash-ring-commission">— LKR</span></div>
+                                        <div class="comm-row"><span class="comm-label">Your Earnings (85%)</span><span class="comm-value" style="color:var(--accent)" id="dash-ring-net">— LKR</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -188,47 +188,11 @@
 
                     <!-- PENDING REQUESTS -->
                     <div class="card">
-                        <div class="card-header"><span>📨</span><span class="card-title">Pending Requests</span><span class="badge danger" style="margin-left:auto;">3</span></div>
-                        <div class="card-body">
-                            <div class="approval-card">
-                                <div class="approval-header"><div class="approval-title">Kasun Madushan</div><div class="approval-time">2 min ago</div></div>
-                                <div class="approval-details">CBC 1234 · Blue Toyota Aqua</div>
-                                <div class="approval-meta">
-                                    <div class="meta-chip">🅿 Slot A-14</div><div class="meta-chip">📅 Mar 06</div>
-                                    <div class="meta-chip">⏰ 14:00–17:00</div><div class="meta-chip">⏱ 3h</div>
-                                    <div class="meta-chip">💰 300 LKR</div>
-                                </div>
-                                <div class="approval-actions">
-                                    <button class="btn btn-primary btn-sm" style="flex:1">✓ Accept</button>
-                                    <button class="btn btn-danger btn-sm" style="flex:1">✕ Reject</button>
-                                </div>
-                            </div>
-                            <div class="approval-card">
-                                <div class="approval-header"><div class="approval-title">Malith Perera</div><div class="approval-time">15 min ago</div></div>
-                                <div class="approval-details">WP 5542 · Red Honda Civic</div>
-                                <div class="approval-meta">
-                                    <div class="meta-chip">🅿 Slot B-03</div><div class="meta-chip">📅 Mar 06</div>
-                                    <div class="meta-chip">⏰ 16:00–19:00</div><div class="meta-chip">⏱ 3h</div>
-                                    <div class="meta-chip">💰 300 LKR</div>
-                                </div>
-                                <div class="approval-actions">
-                                    <button class="btn btn-primary btn-sm" style="flex:1">✓ Accept</button>
-                                    <button class="btn btn-danger btn-sm" style="flex:1">✕ Reject</button>
-                                </div>
-                            </div>
-                            <div class="approval-card">
-                                <div class="approval-header"><div class="approval-title">Nishani Fernando</div><div class="approval-time">1h ago</div></div>
-                                <div class="approval-details">WP 7823 · Black Honda CB150 (Bike)</div>
-                                <div class="approval-meta">
-                                    <div class="meta-chip">🅿 Slot B-10</div><div class="meta-chip">📅 Mar 07</div>
-                                    <div class="meta-chip">⏰ 09:00–11:00</div><div class="meta-chip">⏱ 2h</div>
-                                    <div class="meta-chip">💰 100 LKR</div>
-                                </div>
-                                <div class="approval-actions">
-                                    <button class="btn btn-primary btn-sm" style="flex:1">✓ Accept</button>
-                                    <button class="btn btn-danger btn-sm" style="flex:1">✕ Reject</button>
-                                </div>
-                            </div>
+                        <div class="card-header"><span>📨</span><span class="card-title">Pending Requests</span><span class="badge danger" id="dash-pending-badge" style="margin-left:auto;">—</span></div>
+                        <div class="card-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:14px;min-height:220px;">
+                            <div id="dash-pending-big" style="font-size:72px;font-family:'Syne',sans-serif;font-weight:800;line-height:1;color:var(--accent3);">—</div>
+                            <div id="dash-pending-label" style="font-size:14px;color:var(--text-muted);">Loading...</div>
+                            <button class="btn btn-primary btn-sm" onclick="document.querySelector('[onclick*=\'owner-requests\']').click()">View Requests →</button>
                         </div>
                     </div>
                 </div>
@@ -437,37 +401,39 @@
                     <div class="card">
                         <div class="card-header"><span>📷</span><span class="card-title">Scan Arrival QR Code</span></div>
                         <div class="card-body" style="text-align:center;">
-                            <div class="scan-area">
-                                <div class="scan-line"></div>
-                                <div class="scan-icon">⬛</div>
-                                <div class="scan-text">Position QR code in frame</div>
-                            </div>
+
+                            <!-- Camera viewer (hidden until started) -->
+                            <div id="qr-reader" style="width:100%;border-radius:12px;overflow:hidden;margin-bottom:12px;display:none;"></div>
+
                             <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Use device camera to scan the driver's QR code upon arrival</p>
+
                             <div style="display:flex;gap:10px;margin-bottom:20px;">
-                                <button class="btn btn-primary" style="flex:1;">📷 Open Camera</button>
-                                <button class="btn btn-ghost" style="flex:1;">⌨ Enter Code</button>
+                                <button id="btn-open-camera" class="btn btn-primary" style="flex:1;" onclick="startQRScanner()">📷 Open Camera</button>
+                                <button id="btn-stop-camera" class="btn btn-ghost" style="flex:1;display:none;" onclick="stopQRScanner()">⏹ Stop Camera</button>
                             </div>
+
+                            <!-- Manual entry -->
                             <div style="border-top:1px solid var(--border);padding-top:16px;">
-                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Or verify manually</div>
-                                <input class="form-control" placeholder="Enter Booking ID (e.g. PS-2024-0381)" style="margin-bottom:10px;">
-                                <button class="btn btn-primary" style="width:100%;">✓ Verify Booking</button>
+                                <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Or enter Appointment ID manually</div>
+                                <input id="manual-appt-id" class="form-control" type="number" placeholder="Enter Appointment ID" style="margin-bottom:10px;">
+                                <button class="btn btn-primary" style="width:100%;" onclick="verifyByManualId()">✓ Verify Booking</button>
                             </div>
-                            <div style="margin-top:20px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:14px;padding:16px;text-align:left;">
+
+                            <!-- Result panel (hidden until verified) -->
+                            <div id="scan-result-panel" style="display:none;margin-top:20px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:14px;padding:16px;text-align:left;">
                                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                                    <div style="width:32px;height:32px;background:rgba(0,229,160,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;">✓</div>
+                                    <div style="width:32px;height:32px;background:rgba(0,229,160,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">✓</div>
                                     <div>
-                                        <div style="font-size:13px;font-weight:700;color:var(--accent)">Booking Verified</div>
-                                        <div style="font-size:11px;color:var(--text-muted)">#PS-2024-0381</div>
+                                        <div id="scan-status-label" style="font-size:13px;font-weight:700;color:var(--accent)">Booking Verified</div>
+                                        <div id="scan-booking-code" style="font-size:11px;color:var(--text-muted);font-family:'DM Mono',monospace;"></div>
                                     </div>
                                 </div>
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
-                                    <div><span style="color:var(--text-muted)">Driver:</span> Kasun Madushan</div>
-                                    <div><span style="color:var(--text-muted)">Vehicle:</span> CBC 1234</div>
-                                    <div><span style="color:var(--text-muted)">Slot:</span> A-14</div>
-                                    <div><span style="color:var(--text-muted)">Time:</span> 14:00–17:00</div>
-                                </div>
-                                <button class="btn btn-primary" style="width:100%;margin-top:12px;">✓ Mark as Arrived</button>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:12px;" id="scan-details-grid"></div>
                             </div>
+
+                            <!-- Error panel -->
+                            <div id="scan-error-panel" style="display:none;margin-top:16px;background:rgba(255,77,77,0.07);border:1px solid rgba(255,77,77,0.25);border-radius:12px;padding:14px;font-size:13px;color:var(--danger);"></div>
+
                         </div>
                     </div>
                 </div>
@@ -477,24 +443,24 @@
             <div id="owner-earnings" class="view">
                 <div class="stats-row">
                     <div class="stat-card">
-                        <div class="stat-label">Gross Revenue (Month)</div>
-                        <div class="stat-value" style="font-size:24px;">48,000</div>
+                        <div class="stat-label">Gross Revenue</div>
+                        <div class="stat-value" style="font-size:24px;" id="earn-gross">0</div>
                         <div class="stat-change">LKR total collected</div>
                     </div>
                     <div class="stat-card orange">
                         <div class="stat-label">Platform Commission</div>
-                        <div class="stat-value" style="font-size:24px;">9,600</div>
-                        <div class="stat-change">20% to ParkSmart</div>
+                        <div class="stat-value" style="font-size:24px;" id="earn-commission">0</div>
+                        <div class="stat-change">15% to ParkSmart</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Net Earnings</div>
-                        <div class="stat-value" style="font-size:24px;color:var(--accent)">38,400</div>
-                        <div class="stat-change up">80% yours</div>
+                        <div class="stat-value" style="font-size:24px;color:var(--accent)" id="earn-net">0</div>
+                        <div class="stat-change up">85% yours</div>
                     </div>
                     <div class="stat-card purple">
-                        <div class="stat-label">Completed Bookings</div>
-                        <div class="stat-value" style="font-size:24px;">128</div>
-                        <div class="stat-change">This month</div>
+                        <div class="stat-label">Paid Bookings</div>
+                        <div class="stat-value" style="font-size:24px;" id="earn-count">0</div>
+                        <div class="stat-change">All time</div>
                     </div>
                 </div>
                 <div class="card">
@@ -503,32 +469,12 @@
                         <table class="slots-table">
                             <thead>
                             <tr>
-                                <th>Booking ID</th><th>Driver</th><th>Slot</th><th>Date</th>
-                                <th>Duration</th><th>Gross</th><th>Commission (20%)</th><th>Net Earned</th>
+                                <th>Booking ID</th><th>Driver</th><th>Slot</th>
+                                <th>Payment Date</th><th>Gross</th><th>Commission (15%)</th><th>Net Earned</th>
                             </tr>
                             </thead>
-                            <tbody>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0381</td>
-                                <td>Kasun M.</td><td>A-14</td><td style="font-size:12px;">Mar 06</td><td>3h</td>
-                                <td class="tx-amount-positive">300 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent3);">60 LKR</td>
-                                <td class="tx-amount-positive">240 LKR</td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0375</td>
-                                <td>Malith P.</td><td>C-08</td><td style="font-size:12px;">Mar 03</td><td>5h</td>
-                                <td class="tx-amount-positive">450 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent3);">90 LKR</td>
-                                <td class="tx-amount-positive">360 LKR</td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-2024-0360</td>
-                                <td>Nishani F.</td><td>B-10</td><td style="font-size:12px;">Feb 28</td><td>2h (Bike)</td>
-                                <td class="tx-amount-positive">100 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent3);">20 LKR</td>
-                                <td class="tx-amount-positive">80 LKR</td>
-                            </tr>
+                            <tbody id="earnings-tbody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">No transactions yet.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -560,6 +506,7 @@
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <script src="../js/script.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/api/api.config.js"></script>
@@ -567,6 +514,7 @@
 <script src="../js/api/location.api.js"></script>
 <script src="../js/api/slot.api.js"></script>
 <script src="../js/api/appointment.api.js"></script>
+<script src="../js/api/transaction.api.js"></script>
 <script>
     // ── Session & UI init ──────────────────────────────────────────────────────
     (function () {
@@ -608,19 +556,108 @@
     });
 
     // ── Dashboard stats ────────────────────────────────────────────────────────
+    function fmt(val) {
+        return Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
     async function loadDashboardStats() {
         const user = getCurrentUser();
         if (!user) return;
         try {
-            const slots = await SlotAPI.getByOwner(user.id);
+            const [slots, appointments, transactions] = await Promise.all([
+                SlotAPI.getByOwner(user.id),
+                AppointmentAPI.getByOwner(user.id),
+                TransactionAPI.getByOwnerId(user.id),
+            ]);
+
+            // ── Total Slots ───────────────────────────────────────────────────
             const total    = slots.length;
-            const active   = slots.filter(s => s.status === 'AVAILABLE' || s.status === 'OCCUPIED').length;
+            const active   = slots.filter(s => s.status !== 'INACTIVE').length;
             const inactive = slots.filter(s => s.status === 'INACTIVE').length;
             document.getElementById('dash-total-slots').textContent  = total;
             document.getElementById('dash-slots-detail').textContent =
-                total === 0 ? 'No slots added yet'
-                            : `${active} Active, ${inactive} Inactive`;
+                total === 0 ? 'No slots added yet' : `${active} Active, ${inactive} Inactive`;
+
+            // ── Today's Bookings ──────────────────────────────────────────────
+            const todayStr = new Date().toDateString();
+            const todayCount = appointments.filter(a =>
+                a.startTime && new Date(a.startTime).toDateString() === todayStr
+            ).length;
+            document.getElementById('dash-today-bookings').textContent = todayCount;
+            document.getElementById('dash-today-detail').textContent =
+                todayCount === 0 ? 'No bookings today' : 'appointments today';
+
+            // ── Pending Requests ──────────────────────────────────────────────
+            const pendingCount = appointments.filter(a => a.status === 'PENDING').length;
+            document.getElementById('dash-pending-count').textContent  = pendingCount;
+            document.getElementById('dash-pending-big').textContent    = pendingCount;
+            document.getElementById('dash-pending-badge').textContent  = pendingCount;
+            document.getElementById('dash-pending-detail').textContent =
+                pendingCount === 0 ? 'No pending requests' : 'Needs attention';
+            document.getElementById('dash-pending-label').textContent  =
+                pendingCount === 0 ? 'No pending requests' : 'requests awaiting approval';
+
+            // ── Monthly Revenue ───────────────────────────────────────────────
+            const now = new Date();
+            const monthlyNet = transactions
+                .filter(t => {
+                    if (!t.paymentDate) return false;
+                    const d = new Date(t.paymentDate);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                })
+                .reduce((s, t) => s + (t.ownerEarning || 0), 0);
+            document.getElementById('dash-monthly-revenue').textContent = fmt(monthlyNet);
+
+            // ── Daily Earnings chart (this week Mon–Sun) ──────────────────────
+            const jsDay   = now.getDay();                      // 0=Sun … 6=Sat
+            const todayIdx = jsDay === 0 ? 6 : jsDay - 1;     // remap to Mon=0 … Sun=6
+
+            const weekDays = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(now);
+                d.setDate(now.getDate() - todayIdx + i);
+                return d;
+            });
+
+            const dayEarnings = weekDays.map(day =>
+                transactions
+                    .filter(t => t.paymentDate && new Date(t.paymentDate).toDateString() === day.toDateString())
+                    .reduce((s, t) => s + (t.ownerEarning || 0), 0)
+            );
+
+            const inWeekTxns = transactions.filter(t =>
+                t.paymentDate && weekDays.some(d => new Date(t.paymentDate).toDateString() === d.toDateString())
+            );
+            const weekGross = inWeekTxns.reduce((s, t) => s + (t.totalAmount  || 0), 0);
+            const weekNet   = inWeekTxns.reduce((s, t) => s + (t.ownerEarning || 0), 0);
+
+            document.getElementById('dash-chart-gross').innerHTML =
+                `${fmt(weekGross)} <span style="font-size:14px;color:var(--text-muted);font-weight:400">LKR</span>`;
+            document.getElementById('dash-chart-net').textContent = `${fmt(weekNet)} LKR`;
+
+            const maxVal = Math.max(...dayEarnings, 1);
+            const dayLabelEls = document.querySelectorAll('.day-label-span');
+            dayEarnings.forEach((val, i) => {
+                const bar = document.getElementById(`dash-bar-${i}`);
+                const pct = Math.max(Math.round((val / maxVal) * 100), 4);
+                bar.style.height = pct + '%';
+                bar.querySelector('.bar-tip').textContent = val > 0 ? fmt(val) : '0';
+                bar.classList.toggle('highlighted', i === todayIdx);
+                if (dayLabelEls[i]) {
+                    dayLabelEls[i].style.color      = i === todayIdx ? 'var(--accent)' : '';
+                    dayLabelEls[i].style.fontWeight = i === todayIdx ? '600' : '';
+                }
+            });
+
+            // ── Commission ring (all-time totals) ─────────────────────────────
+            const allGross      = transactions.reduce((s, t) => s + (t.totalAmount  || 0), 0);
+            const allCommission = transactions.reduce((s, t) => s + (t.commission   || 0), 0);
+            const allNet        = transactions.reduce((s, t) => s + (t.ownerEarning || 0), 0);
+            document.getElementById('dash-ring-gross').textContent      = fmt(allGross)      + ' LKR';
+            document.getElementById('dash-ring-commission').textContent = fmt(allCommission) + ' LKR';
+            document.getElementById('dash-ring-net').textContent        = fmt(allNet)        + ' LKR';
+
         } catch (e) {
+            console.error('Dashboard stats error', e);
             document.getElementById('dash-slots-detail').textContent = 'Failed to load';
         }
     }
@@ -769,6 +806,7 @@
             if (id === 'owner-slots')     ownerSlots.loadLocations();
             if (id === 'owner-dashboard') loadDashboardStats();
             if (id === 'owner-requests')  loadAppointmentRequests();
+            if (id === 'owner-earnings')  loadEarnings();
         };
     })();
 
@@ -1359,6 +1397,144 @@
         return { loadLocations, toggleForm, submitLocation, toggleActive, deleteLocation,
                  editLocation, manageSlots, closeSlots, submitSlot, toggleSlotActive, deleteSlot, checkLocForm, setMapTheme };
     })();
+
+    // ── QR Scanner ────────────────────────────────────────────────────────────
+    let html5QrScanner = null;
+
+    function startQRScanner() {
+        const reader = document.getElementById('qr-reader');
+        reader.style.display = 'block';
+        document.getElementById('btn-open-camera').style.display = 'none';
+        document.getElementById('btn-stop-camera').style.display = 'flex';
+        clearScanPanels();
+
+        html5QrScanner = new Html5Qrcode('qr-reader');
+        html5QrScanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (decodedText) => {
+                stopQRScanner();
+                verifyAppointmentId(decodedText.trim());
+            },
+            () => {}
+        ).catch(err => {
+            showScanError('Camera error: ' + err);
+            stopQRScanner();
+        });
+    }
+
+    function stopQRScanner() {
+        if (html5QrScanner) {
+            html5QrScanner.stop().catch(() => {});
+            html5QrScanner = null;
+        }
+        document.getElementById('qr-reader').style.display = 'none';
+        document.getElementById('btn-open-camera').style.display = 'flex';
+        document.getElementById('btn-stop-camera').style.display = 'none';
+    }
+
+    function verifyByManualId() {
+        const val = document.getElementById('manual-appt-id').value.trim();
+        if (!val) { showScanError('Please enter an Appointment ID.'); return; }
+        verifyAppointmentId(val);
+    }
+
+    async function verifyAppointmentId(idStr) {
+        clearScanPanels();
+        const id = parseInt(idStr);
+        if (isNaN(id)) { showScanError('Invalid QR code — expected a numeric Appointment ID.'); return; }
+        try {
+            const a = await AppointmentAPI.getById(id);
+            showScanResult(a);
+        } catch (e) {
+            showScanError('Booking not found or could not be verified: ' + (e.message || 'Unknown error'));
+        }
+    }
+
+    function showScanResult(a) {
+        const panel = document.getElementById('scan-result-panel');
+        const start = a.startTime ? new Date(a.startTime) : null;
+        const end   = a.endTime   ? new Date(a.endTime)   : null;
+        const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—';
+        const timeStr = (start && end) ? start.toTimeString().slice(0,5) + '–' + end.toTimeString().slice(0,5) : '—';
+        const veh = [a.vehicleNumber, a.vehicleModel, a.vehicleColor, a.vehicleType].filter(Boolean).join(' · ') || '—';
+
+        const statusColors = { ACTIVE: 'var(--accent)', PENDING: '#f59e0b', COMPLETED: '#6b7280', REJECTED: 'var(--danger)', CANCELLED: 'var(--danger)' };
+        document.getElementById('scan-status-label').style.color = statusColors[a.status] || 'var(--accent)';
+        document.getElementById('scan-status-label').textContent = a.status || 'Verified';
+        document.getElementById('scan-booking-code').textContent = a.bookingCode || '';
+
+        document.getElementById('scan-details-grid').innerHTML = `
+            <div><span style="color:var(--text-muted)">Driver</span><br><strong>${(a.driverFirstName || '') + ' ' + (a.driverLastName || '')}</strong></div>
+            <div><span style="color:var(--text-muted)">Vehicle</span><br><strong>${veh}</strong></div>
+            <div><span style="color:var(--text-muted)">Slot</span><br><strong>${a.slotNumber || '—'}</strong></div>
+            <div><span style="color:var(--text-muted)">Location</span><br><strong>${a.locationName || '—'}</strong></div>
+            <div><span style="color:var(--text-muted)">Date</span><br><strong>${dateStr}</strong></div>
+            <div><span style="color:var(--text-muted)">Time</span><br><strong>${timeStr}</strong></div>
+            <div><span style="color:var(--text-muted)">Duration</span><br><strong>${a.duration ? (a.duration / 60).toFixed(1) + ' h' : '—'}</strong></div>
+            <div><span style="color:var(--text-muted)">Amount</span><br><strong>${a.totalAmount != null ? a.totalAmount + ' LKR' : '—'}</strong></div>
+        `;
+        panel.style.display = 'block';
+    }
+
+    function showScanError(msg) {
+        const el = document.getElementById('scan-error-panel');
+        el.textContent = '⚠ ' + msg;
+        el.style.display = 'block';
+    }
+
+    function clearScanPanels() {
+        document.getElementById('scan-result-panel').style.display = 'none';
+        document.getElementById('scan-error-panel').style.display = 'none';
+    }
+
+    // ── Earnings ──────────────────────────────────────────────────────────────
+    async function loadEarnings() {
+        const user = getCurrentUser();
+        try {
+            const txns = await TransactionAPI.getByOwnerId(user.id);
+
+            const gross      = txns.reduce((s, t) => s + t.totalAmount,  0);
+            const commission = txns.reduce((s, t) => s + t.commission,   0);
+            const net        = txns.reduce((s, t) => s + t.ownerEarning, 0);
+
+            document.getElementById('earn-gross').textContent      = fmt(gross);
+            document.getElementById('earn-commission').textContent = fmt(commission);
+            document.getElementById('earn-net').textContent        = fmt(net);
+            document.getElementById('earn-count').textContent      = txns.length;
+
+            const tbody = document.getElementById('earnings-tbody');
+            if (!txns.length) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">No transactions yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = txns
+                .slice()
+                .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
+                .map(t => {
+                    const paidDate = t.paymentDate
+                        ? new Date(t.paymentDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                        : '—';
+                    const paidTime = t.paymentDate
+                        ? new Date(t.paymentDate).toTimeString().slice(0, 5)
+                        : '';
+                    const driver = [t.driverFirstName, t.driverLastName].filter(Boolean).join(' ') || '—';
+                    return `<tr>
+                        <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">${t.bookingCode || '—'}</td>
+                        <td>${driver}</td>
+                        <td>${t.slotNumber || '—'}</td>
+                        <td style="font-size:12px;">${paidDate}${paidTime ? ' · ' + paidTime : ''}</td>
+                        <td style="font-family:'DM Mono',monospace;">${t.totalAmount.toFixed(2)} LKR</td>
+                        <td style="font-family:'DM Mono',monospace;color:var(--accent3);">${t.commission.toFixed(2)} LKR</td>
+                        <td style="font-family:'DM Mono',monospace;color:var(--accent);">${t.ownerEarning.toFixed(2)} LKR</td>
+                    </tr>`;
+                })
+                .join('');
+        } catch (e) {
+            console.error('Failed to load earnings', e);
+        }
+    }
 </script>
 </body>
 </html>

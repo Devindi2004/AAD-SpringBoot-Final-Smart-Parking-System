@@ -3,6 +3,7 @@ package org.example.backend.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.example.backend.enums.AppointmentStatus;
+import org.example.backend.enums.PaymentStatus;
 
 import java.time.LocalDateTime;
 
@@ -28,6 +29,9 @@ public class Appointment {
 
     @Enumerated(EnumType.STRING)
     private AppointmentStatus status;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
     private LocalDateTime createdAt;
 

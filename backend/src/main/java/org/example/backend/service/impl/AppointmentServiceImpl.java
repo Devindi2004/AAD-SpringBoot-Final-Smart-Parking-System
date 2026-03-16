@@ -7,6 +7,7 @@ import org.example.backend.entity.ParkingSlot;
 import org.example.backend.entity.User;
 import org.example.backend.entity.Vehicle;
 import org.example.backend.enums.AppointmentStatus;
+import org.example.backend.enums.PaymentStatus;
 import org.example.backend.exception.ResourceNotFoundException;
 import org.example.backend.repository.AppointmentRepository;
 import org.example.backend.repository.ParkingSlotRepository;
@@ -63,6 +64,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         appointment.setTotalAmount(dto.getTotalAmount());
         appointment.setCommission(Math.round(dto.getTotalAmount() * 0.20 * 100.0) / 100.0);
         appointment.setStatus(AppointmentStatus.PENDING);
+        appointment.setPaymentStatus(PaymentStatus.UNPAID);
         appointment.setCreatedAt(LocalDateTime.now());
         appointment.setBookingCode("PS-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 
@@ -154,6 +156,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         dto.setTotalAmount(a.getTotalAmount());
         dto.setCommission(a.getCommission());
         dto.setStatus(a.getStatus() != null ? a.getStatus().name() : null);
+        dto.setPaymentStatus(a.getPaymentStatus() != null ? a.getPaymentStatus().name() : PaymentStatus.UNPAID.name());
         dto.setCreatedAt(a.getCreatedAt());
 
         if (a.getDriver() != null) {

@@ -14,4 +14,10 @@ public interface TransactionService {
 
     void deleteTransaction(Long id);
 
+    TransactionDTO makePayment(Long appointmentId);
+
+    TransactionDTO getByAppointmentId(Long appointmentId);
+
+    List<TransactionDTO> getByOwnerId(Long ownerId);
+
 }

@@ -14,6 +14,7 @@ public class AppointmentDTO {
     private double totalAmount;
     private double commission;
     private String status;
+    private String paymentStatus;
     private LocalDateTime createdAt;
     private Long driverId;
     private Long slotId;

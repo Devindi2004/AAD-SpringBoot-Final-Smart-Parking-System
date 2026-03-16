@@ -52,4 +52,12 @@ const AppointmentAPI = {
         return apiFetch(`/api/appointments/location/${locationId}/active`);
     },
 
+    /**
+     * Get a single appointment by ID (used for QR scan verification).
+     * GET /api/appointments/{id}
+     */
+    getById(id) {
+        return apiFetch(`/api/appointments/${id}`);
+    },
+
 };

@@ -14,4 +14,13 @@ public class TransactionDTO {
     private LocalDateTime paymentDate;
     private Long appointmentId;
 
+    // Display fields — populated by the service
+    private String bookingCode;
+    private String driverFirstName;
+    private String driverLastName;
+    private String slotNumber;
+    private String locationName;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+
 }
