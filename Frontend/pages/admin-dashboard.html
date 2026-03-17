@@ -6,292 +6,7 @@
     <title>ParkSmart — Admin Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Cabinet+Grotesk:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        /* =============================================
-           ParkSmart — Shared Stylesheet (embedded)
-           ============================================= */
-        :root {
-            --bg: #0d1117;
-            --surface: #161b22;
-            --surface2: #1c2230;
-            --surface3: #212840;
-            --border: rgba(255,255,255,0.06);
-            --accent: #00e5a0;
-            --accent2: #6c63ff;
-            --accent3: #ff6b6b;
-            --warning: #ffb020;
-            --danger: #ff4757;
-            --text: #e6edf3;
-            --text-muted: #8b949e;
-            --text-dim: #484f58;
-            --sidebar-w: 240px;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        html, body {
-            height: 100%;
-            font-family: 'Cabinet Grotesk', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        /* ---- LAYOUT ---- */
-        .app { display: flex; height: 100vh; overflow: hidden; }
-
-        /* ---- SIDEBAR ---- */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 20px 12px;
-            gap: 6px;
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 4px 8px 16px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 8px;
-        }
-        .logo-icon {
-            width: 34px; height: 34px;
-            background: var(--accent);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; color: #000; font-weight: 900;
-        }
-        .logo-text { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; color: var(--text); }
-        .logo-text span { color: var(--accent); }
-
-        .role-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-dim);
-            padding: 6px 10px 2px;
-            font-weight: 600;
-        }
-        .nav-item {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 9px 12px;
-            border-radius: 10px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            font-family: 'Cabinet Grotesk', sans-serif;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.18s ease;
-            text-align: left;
-            position: relative;
-        }
-        .nav-item:hover { background: var(--surface2); color: var(--text); }
-        .nav-item:hover .nav-icon svg { stroke: var(--text); }
-        .nav-item.active { background: rgba(0,229,160,0.1); color: var(--accent); }
-        .nav-item.active .nav-icon svg { stroke: var(--accent); }
-        .nav-icon {
-            display: flex; align-items: center; justify-content: center;
-            flex-shrink: 0; width: 16px; height: 16px;
-        }
-        .nav-icon svg { stroke: var(--text-muted); transition: stroke 0.18s; }
-
-        .badge {
-            margin-left: auto;
-            background: var(--accent);
-            color: #000;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 20px;
-        }
-        .badge.warning { background: var(--warning); color: #000; }
-        .badge.danger { background: var(--danger); color: #fff; }
-
-        .sidebar-footer { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); }
-        .user-card {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px; border-radius: 12px; background: var(--surface2); position: relative;
-        }
-        .avatar {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: 700; color: #000; flex-shrink: 0;
-        }
-        .user-info { flex: 1; min-width: 0; }
-        .user-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .user-role { font-size: 11px; color: var(--text-muted); }
-        .online-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; flex-shrink: 0; }
-
-        /* ---- MAIN ---- */
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .topbar {
-            padding: 16px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: space-between;
-            flex-shrink: 0; background: var(--surface);
-        }
-        .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 18px; }
-        .topbar-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
-        .topbar-right { display: flex; align-items: center; gap: 10px; }
-        .search-box {
-            display: flex; align-items: center; gap: 8px;
-            background: var(--surface2); border: 1px solid var(--border);
-            border-radius: 10px; padding: 7px 14px;
-        }
-        .search-box input {
-            background: transparent; border: none; outline: none;
-            color: var(--text); font-size: 13px; width: 180px;
-        }
-        .icon-btn {
-            width: 36px; height: 36px; background: var(--surface2);
-            border: 1px solid var(--border); border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 15px; transition: background 0.15s;
-        }
-        .icon-btn:hover { background: var(--surface3); }
-        .gear-wrapper { position: relative; }
-        .gear-dropdown {
-            display: none; position: absolute; top: calc(100% + 8px); right: 0;
-            background: var(--surface2); border: 1px solid var(--border);
-            border-radius: 12px; min-width: 160px; padding: 6px; z-index: 100;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        }
-        .gear-dropdown.open { display: block; }
-        .gear-dropdown-item {
-            display: flex; align-items: center; gap: 8px; padding: 9px 12px;
-            border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted);
-            transition: background 0.15s;
-        }
-        .gear-dropdown-item:hover { background: var(--surface3); color: var(--text); }
-        .gear-dropdown-item.danger { color: var(--danger); }
-        .gear-dropdown-item.danger:hover { background: rgba(255,71,87,0.1); color: var(--danger); }
-
-        .content { flex: 1; overflow-y: auto; padding: 24px; }
-        .view { display: none; }
-        .view.active { display: block; }
-
-        /* ---- CARDS ---- */
-        .card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 16px; overflow: hidden;
-        }
-        .card-header {
-            display: flex; align-items: center; gap: 8px;
-            padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 13px;
-        }
-        .card-title { font-weight: 700; font-size: 14px; }
-        .card-subtitle { margin-left: auto; font-size: 12px; color: var(--text-muted); }
-        .card-body { padding: 20px; }
-
-        /* ---- STATS ---- */
-        .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
-        .stat-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 16px; padding: 18px; position: relative; overflow: hidden;
-        }
-        .stat-card::before {
-            content: ''; position: absolute; top: 0; right: 0;
-            width: 80px; height: 80px; background: var(--accent);
-            opacity: 0.04; border-radius: 50%; transform: translate(20px,-20px);
-        }
-        .stat-card.orange::before { background: var(--warning); }
-        .stat-card.purple::before { background: var(--accent2); }
-        .stat-card.red::before { background: var(--danger); }
-        .stat-icon { font-size: 22px; margin-bottom: 8px; }
-        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .stat-value { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
-        .stat-change { font-size: 11px; color: var(--text-muted); }
-        .stat-change .up { color: var(--accent); }
-
-        /* ---- ANALYTICS ---- */
-        .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-        .analytics-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
-        .donut-wrap { display: flex; align-items: center; gap: 20px; }
-        .donut-svg { flex-shrink: 0; }
-        .donut-legend { flex: 1; }
-        .legend-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
-        .legend-color-label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .color-swatch { width: 10px; height: 10px; border-radius: 3px; }
-        .legend-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-muted); }
-
-        /* ---- NOTIFICATIONS ---- */
-        .notification { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-        .notification:last-child { border-bottom: none; }
-        .notif-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
-        .notif-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
-        .notif-msg { font-size: 12px; color: var(--text-muted); }
-        .notif-time { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
-
-        /* ---- TABLES ---- */
-        .slots-table { width: 100%; border-collapse: collapse; }
-        .slots-table th {
-            font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
-            color: var(--text-dim); padding: 10px 16px; text-align: left;
-            border-bottom: 1px solid var(--border); font-weight: 600; background: var(--surface2);
-        }
-        .slots-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        .slots-table tr:last-child td { border-bottom: none; }
-        .slots-table tbody tr:hover { background: rgba(255,255,255,0.015); }
-
-        /* ---- BADGES & PILLS ---- */
-        .slot-badge { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .slot-open { background: rgba(0,229,160,0.12); color: var(--accent); }
-        .slot-partial { background: rgba(255,176,32,0.12); color: var(--warning); }
-        .slot-full { background: rgba(255,71,87,0.12); color: var(--danger); }
-
-        .status-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .status-active { background: rgba(0,229,160,0.12); color: var(--accent); }
-        .status-pending { background: rgba(255,176,32,0.12); color: var(--warning); }
-        .status-completed { background: rgba(108,99,255,0.12); color: var(--accent2); }
-        .status-rejected { background: rgba(255,71,87,0.12); color: var(--danger); }
-
-        .verify-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-        .verify-pending { background: rgba(255,176,32,0.12); color: var(--warning); }
-        .verify-verified { background: rgba(0,229,160,0.12); color: var(--accent); }
-        .verify-rejected { background: rgba(255,71,87,0.12); color: var(--danger); }
-
-        .tx-amount-positive { font-family: 'DM Mono', monospace; color: var(--accent); font-weight: 600; }
-
-        /* ---- BUTTONS ---- */
-        .btn {
-            padding: 9px 18px; border-radius: 10px; border: none;
-            font-family: 'Cabinet Grotesk', sans-serif; font-size: 13px; font-weight: 600;
-            cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
-        }
-        .btn-primary { background: var(--accent); color: #000; }
-        .btn-primary:hover { background: #00c98a; transform: translateY(-1px); }
-        .btn-danger { background: rgba(255,71,87,0.15); color: var(--danger); border: 1px solid rgba(255,71,87,0.2); }
-        .btn-danger:hover { background: rgba(255,71,87,0.25); }
-        .btn-ghost { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); }
-        .btn-ghost:hover { background: var(--surface3); color: var(--text); }
-        .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 8px; }
-
-        /* ---- FORMS ---- */
-        .form-control {
-            width: 100%; background: var(--surface2); border: 1px solid var(--border);
-            border-radius: 10px; padding: 9px 13px; color: var(--text);
-            font-family: 'Cabinet Grotesk', sans-serif; font-size: 13px; outline: none; transition: border-color 0.15s;
-        }
-        .form-control:focus { border-color: rgba(0,229,160,0.4); }
-        .form-control option { background: var(--surface2); }
-
-        /* ---- SCROLLBAR ---- */
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-    </style>
+    <link rel="stylesheet" href="../css/admin-dashboard.css">
 </head>
 <body>
 <div class="app">
@@ -392,16 +107,12 @@
                 <div class="topbar-subtitle">Friday, March 06, 2026</div>
             </div>
             <div class="topbar-right">
-                <div class="search-box">
-                    <span>🔍</span>
-                    <input type="text" placeholder="Search users, bookings...">
-                </div>
-                <div class="icon-btn">🔔</div>
-                <div class="gear-wrapper">
-                    <div class="icon-btn" id="gear-btn">⚙</div>
-                    <div class="gear-dropdown" id="gear-dropdown">
-                        <div class="gear-dropdown-item danger" onclick="logout()">⏻ Logout</div>
-                    </div>
+                <div class="icon-btn" onclick="logout()" title="Logout" style="color:var(--danger);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
                 </div>
             </div>
         </div>
@@ -414,26 +125,26 @@
                     <div class="stat-card">
                         <div class="stat-icon">👥</div>
                         <div class="stat-label">Total Users</div>
-                        <div class="stat-value">1,248</div>
-                        <div class="stat-change"><span class="up">↑ 42</span> this week</div>
+                        <div class="stat-value" id="dash-total-users">—</div>
+                        <div class="stat-change" id="dash-users-detail">Loading…</div>
                     </div>
                     <div class="stat-card orange">
                         <div class="stat-icon">🏢</div>
                         <div class="stat-label">Parking Owners</div>
-                        <div class="stat-value">87</div>
-                        <div class="stat-change">4 pending verification</div>
+                        <div class="stat-value" id="dash-total-owners">—</div>
+                        <div class="stat-change" id="dash-owners-detail">Loading…</div>
                     </div>
                     <div class="stat-card purple">
                         <div class="stat-icon">📅</div>
                         <div class="stat-label">Total Appointments</div>
-                        <div class="stat-value">5,821</div>
-                        <div class="stat-change"><span class="up">↑ 12%</span> this month</div>
+                        <div class="stat-value" id="dash-total-appts">—</div>
+                        <div class="stat-change" id="dash-appts-detail">Loading…</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">💎</div>
                         <div class="stat-label">Commission Earned</div>
-                        <div class="stat-value">124k</div>
-                        <div class="stat-change">LKR this month</div>
+                        <div class="stat-value" id="dash-commission">—</div>
+                        <div class="stat-change" id="dash-commission-detail">LKR this month</div>
                     </div>
                 </div>
 
@@ -441,32 +152,22 @@
                     <div class="analytics-card">
                         <div style="font-size:13px;font-weight:700;margin-bottom:14px;">Vehicle Type Distribution</div>
                         <div class="donut-wrap">
-                            <svg class="donut-svg" viewBox="0 0 80 80" width="140" height="140">
+                            <svg id="veh-donut" class="donut-svg" viewBox="0 0 80 80" width="140" height="140">
                                 <circle cx="40" cy="40" r="30" fill="none" stroke="#1a2035" stroke-width="12"/>
-                                <circle cx="40" cy="40" r="30" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="94 188" stroke-linecap="butt" transform="rotate(-90 40 40)"/>
-                                <circle cx="40" cy="40" r="30" fill="none" stroke="var(--accent3)" stroke-width="12" stroke-dasharray="56 188" stroke-dashoffset="-94" stroke-linecap="butt" transform="rotate(-90 40 40)"/>
-                                <circle cx="40" cy="40" r="30" fill="none" stroke="var(--accent2)" stroke-width="12" stroke-dasharray="38 188" stroke-dashoffset="-150" stroke-linecap="butt" transform="rotate(-90 40 40)"/>
                             </svg>
-                            <div class="donut-legend">
-                                <div class="legend-row"><div class="legend-color-label"><div class="color-swatch" style="background:var(--accent)"></div>Cars</div><div class="legend-pct">50%</div></div>
-                                <div class="legend-row"><div class="legend-color-label"><div class="color-swatch" style="background:var(--accent3)"></div>Bikes</div><div class="legend-pct">30%</div></div>
-                                <div class="legend-row"><div class="legend-color-label"><div class="color-swatch" style="background:var(--accent2)"></div>Vans</div><div class="legend-pct">20%</div></div>
+                            <div class="donut-legend" id="veh-legend">
+                                <div style="color:var(--text-muted);font-size:12px;">Loading…</div>
                             </div>
                         </div>
                     </div>
                     <div class="analytics-card">
                         <div style="font-size:13px;font-weight:700;margin-bottom:14px;">Booking Status Overview</div>
                         <div class="donut-wrap">
-                            <svg class="donut-svg" viewBox="0 0 80 80" width="140" height="140">
+                            <svg id="status-donut" class="donut-svg" viewBox="0 0 80 80" width="140" height="140">
                                 <circle cx="40" cy="40" r="30" fill="none" stroke="#1a2035" stroke-width="12"/>
-                                <circle cx="40" cy="40" r="30" fill="none" stroke="var(--accent)" stroke-width="12" stroke-dasharray="112 188" stroke-linecap="butt" transform="rotate(-90 40 40)"/>
-                                <circle cx="40" cy="40" r="30" fill="none" stroke="var(--warning)" stroke-width="12" stroke-dasharray="38 188" stroke-dashoffset="-112" stroke-linecap="butt" transform="rotate(-90 40 40)"/>
-                                <circle cx="40" cy="40" r="30" fill="none" stroke="var(--danger)" stroke-width="12" stroke-dasharray="38 188" stroke-dashoffset="-150" stroke-linecap="butt" transform="rotate(-90 40 40)"/>
                             </svg>
-                            <div class="donut-legend">
-                                <div class="legend-row"><div class="legend-color-label"><div class="color-swatch" style="background:var(--accent)"></div>Completed</div><div class="legend-pct">60%</div></div>
-                                <div class="legend-row"><div class="legend-color-label"><div class="color-swatch" style="background:var(--warning)"></div>Pending</div><div class="legend-pct">20%</div></div>
-                                <div class="legend-row"><div class="legend-color-label"><div class="color-swatch" style="background:var(--danger)"></div>Rejected</div><div class="legend-pct">20%</div></div>
+                            <div class="donut-legend" id="status-legend">
+                                <div style="color:var(--text-muted);font-size:12px;">Loading…</div>
                             </div>
                         </div>
                     </div>
@@ -474,31 +175,8 @@
 
                 <div class="card">
                     <div class="card-header"><span>📋</span><span class="card-title">Recent System Activity</span></div>
-                    <div class="card-body">
-                        <div class="notification">
-                            <div class="notif-dot" style="background:var(--accent)"></div>
-                            <div>
-                                <div class="notif-title">New Owner Registration</div>
-                                <div class="notif-msg">Saman Jayawardena registered as Parking Owner — awaiting verification</div>
-                                <div class="notif-time">5 minutes ago</div>
-                            </div>
-                        </div>
-                        <div class="notification">
-                            <div class="notif-dot" style="background:var(--accent3)"></div>
-                            <div>
-                                <div class="notif-title">Transaction Completed</div>
-                                <div class="notif-msg">Booking #PS-2024-0381 completed — Commission: 60 LKR received</div>
-                                <div class="notif-time">12 minutes ago</div>
-                            </div>
-                        </div>
-                        <div class="notification">
-                            <div class="notif-dot" style="background:var(--warning)"></div>
-                            <div>
-                                <div class="notif-title">Slot Reported Full</div>
-                                <div class="notif-msg">Liberty Plaza Slot C is at 100% capacity — 3 drivers redirected</div>
-                                <div class="notif-time">34 minutes ago</div>
-                            </div>
-                        </div>
+                    <div class="card-body" id="recent-activity-list">
+                        <div style="color:var(--text-muted);font-size:13px;">Loading…</div>
                     </div>
                 </div>
             </div>
@@ -508,49 +186,26 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <div>
                         <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">User Management</div>
-                        <div style="font-size:12px;color:var(--text-muted);">1,248 total registered users</div>
+                        <div style="font-size:12px;color:var(--text-muted);" id="users-count-label">Loading…</div>
                     </div>
                     <div style="display:flex;gap:10px;">
-                        <select class="form-control" style="width:140px">
-                            <option>All Roles</option><option>Driver</option><option>Owner</option><option>Admin</option>
+                        <select class="form-control" style="width:140px" id="users-role-filter" onchange="renderUsersTable()">
+                            <option value="">All Roles</option>
+                            <option value="DRIVER">Driver</option>
+                            <option value="OWNER">Owner</option>
+                            <option value="ADMIN">Admin</option>
                         </select>
-                        <button class="btn btn-primary">Export CSV</button>
+                        <button class="btn btn-primary" onclick="exportUsersCSV()">Export CSV</button>
                     </div>
                 </div>
                 <div class="card">
                     <div class="card-body" style="padding:0;">
                         <table class="slots-table">
                             <thead>
-                            <tr><th>User ID</th><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th>User ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Status</th><th>Actions</th></tr>
                             </thead>
-                            <tbody>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#U-1248</td>
-                                <td>Kasun Madushan</td>
-                                <td style="font-size:12px;color:var(--text-muted)">kasun@email.com</td>
-                                <td><span class="slot-badge slot-open">Driver</span></td>
-                                <td style="font-size:12px;">Jan 15, 2026</td>
-                                <td><span class="verify-badge verify-verified">Active</span></td>
-                                <td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm">View</button><button class="btn btn-danger btn-sm">Suspend</button></div></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#U-1087</td>
-                                <td>Ruwan Silva</td>
-                                <td style="font-size:12px;color:var(--text-muted)">ruwan@email.com</td>
-                                <td><span class="slot-badge slot-partial">Owner</span></td>
-                                <td style="font-size:12px;">Nov 02, 2025</td>
-                                <td><span class="verify-badge verify-verified">Active</span></td>
-                                <td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm">View</button><button class="btn btn-danger btn-sm">Suspend</button></div></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#U-1040</td>
-                                <td>Saman Jayawardena</td>
-                                <td style="font-size:12px;color:var(--text-muted)">saman@email.com</td>
-                                <td><span class="slot-badge slot-partial">Owner</span></td>
-                                <td style="font-size:12px;">Mar 06, 2026</td>
-                                <td><span class="verify-badge verify-pending">Pending</span></td>
-                                <td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm">View</button><button class="btn btn-danger btn-sm">Suspend</button></div></td>
-                            </tr>
+                            <tbody id="users-table-body">
+                            <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Loading…</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -561,51 +216,16 @@
             <div id="admin-verify" class="view">
                 <div style="margin-bottom:20px;">
                     <div style="font-size:16px;font-weight:700;font-family:'Syne',sans-serif;">Owner Verification</div>
-                    <div style="font-size:12px;color:var(--text-muted);">Review and verify parking owner applications</div>
+                    <div style="font-size:12px;color:var(--text-muted);" id="verify-count-label">Review and verify parking owner applications</div>
                 </div>
                 <div class="card">
                     <div class="card-body" style="padding:0;">
                         <table class="slots-table">
                             <thead>
-                            <tr><th>Owner ID</th><th>Name</th><th>Email</th><th>Location</th><th>Applied</th><th>Status</th><th>Actions</th></tr>
+                            <tr><th>Owner ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Applied</th><th>Status</th><th>Actions</th></tr>
                             </thead>
-                            <tbody>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#OWN-041</td>
-                                <td>Saman Jayawardena</td>
-                                <td style="font-size:12px;color:var(--text-muted)">saman@email.com</td>
-                                <td>Majestic City, Col 04</td>
-                                <td style="font-size:12px;">Mar 06, 2026</td>
-                                <td><span class="verify-badge verify-pending">⏳ Pending</span></td>
-                                <td><div style="display:flex;gap:4px;"><button class="btn btn-primary btn-sm">✓ Verify</button><button class="btn btn-danger btn-sm">✕ Reject</button></div></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#OWN-040</td>
-                                <td>Ruwan Silva</td>
-                                <td style="font-size:12px;color:var(--text-muted)">ruwan@email.com</td>
-                                <td>Liberty Plaza, Col 03</td>
-                                <td style="font-size:12px;">Mar 05, 2026</td>
-                                <td><span class="verify-badge verify-verified">✓ Verified</span></td>
-                                <td><div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-sm">Details</button><button class="btn btn-danger btn-sm">Suspend</button></div></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#OWN-039</td>
-                                <td>Dilani Perera</td>
-                                <td style="font-size:12px;color:var(--text-muted)">dilani@email.com</td>
-                                <td>One Galle Face, Col 02</td>
-                                <td style="font-size:12px;">Mar 04, 2026</td>
-                                <td><span class="verify-badge verify-pending">⏳ Pending</span></td>
-                                <td><div style="display:flex;gap:4px;"><button class="btn btn-primary btn-sm">✓ Verify</button><button class="btn btn-danger btn-sm">✕ Reject</button></div></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#OWN-038</td>
-                                <td>Nimal Fernando</td>
-                                <td style="font-size:12px;color:var(--text-muted)">nimal@email.com</td>
-                                <td>Colombo City Centre</td>
-                                <td style="font-size:12px;">Mar 03, 2026</td>
-                                <td><span class="verify-badge verify-pending">⏳ Pending</span></td>
-                                <td><div style="display:flex;gap:4px;"><button class="btn btn-primary btn-sm">✓ Verify</button><button class="btn btn-danger btn-sm">✕ Reject</button></div></td>
-                            </tr>
+                            <tbody id="verify-table-body">
+                            <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted);">Loading…</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -615,49 +235,17 @@
             <!-- ========== APPOINTMENTS ========== -->
             <div id="admin-appointments" class="view">
                 <div class="card">
-                    <div class="card-header"><span>📅</span><span class="card-title">All Appointments</span><span class="card-subtitle">5,821 total</span></div>
+                    <div class="card-header">
+                        <span>📅</span><span class="card-title">All Appointments</span>
+                        <span class="card-subtitle" id="appts-total-label">Loading…</span>
+                    </div>
                     <div class="card-body" style="padding:0;">
                         <table class="slots-table">
                             <thead>
-                            <tr><th>Booking ID</th><th>Driver</th><th>Owner / Location</th><th>Vehicle</th><th>Date & Time</th><th>Amount</th><th>Commission</th><th>Status</th></tr>
+                            <tr><th>Booking ID</th><th>Driver</th><th>Location / Slot</th><th>Vehicle</th><th>Date & Time</th><th>Amount</th><th>Payment</th><th>Status</th></tr>
                             </thead>
-                            <tbody>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0381</td>
-                                <td>Kasun M.</td><td>Ruwan S. · Majestic</td>
-                                <td>CBC 1234 (Car)</td>
-                                <td style="font-size:12px;">Mar 06 · 14:00–17:00</td>
-                                <td class="tx-amount-positive">300 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent)">60 LKR</td>
-                                <td><span class="status-pill status-active">Active</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0380</td>
-                                <td>Malith P.</td><td>Dilani P. · Galle Face</td>
-                                <td>WP 5542 (Car)</td>
-                                <td style="font-size:12px;">Mar 05 · 10:00–12:00</td>
-                                <td class="tx-amount-positive">300 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent)">60 LKR</td>
-                                <td><span class="status-pill status-pending">Pending</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0375</td>
-                                <td>Nishani F.</td><td>Ruwan S. · Liberty</td>
-                                <td>WP 7823 (Bike)</td>
-                                <td style="font-size:12px;">Mar 03 · 09:00–14:00</td>
-                                <td class="tx-amount-positive">100 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent)">20 LKR</td>
-                                <td><span class="status-pill status-completed">Completed</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0370</td>
-                                <td>Kasun M.</td><td>Saman J. · Majestic</td>
-                                <td>CBC 1234 (Van)</td>
-                                <td style="font-size:12px;">Mar 01 · 08:00–11:00</td>
-                                <td class="tx-amount-positive">300 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent)">60 LKR</td>
-                                <td><span class="status-pill status-completed">Completed</span></td>
-                            </tr>
+                            <tbody id="appts-table-body">
+                            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">Loading…</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -669,17 +257,17 @@
                 <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
                     <div class="stat-card">
                         <div class="stat-label">Total Transactions</div>
-                        <div class="stat-value">5,821</div>
-                        <div class="stat-change">This month</div>
+                        <div class="stat-value" id="comm-total-tx">—</div>
+                        <div class="stat-change">All time</div>
                     </div>
                     <div class="stat-card purple">
                         <div class="stat-label">Total Platform Revenue</div>
-                        <div class="stat-value">620k</div>
-                        <div class="stat-change">LKR gross</div>
+                        <div class="stat-value" id="comm-gross">—</div>
+                        <div class="stat-change">LKR gross collected</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Admin Commission (20%)</div>
-                        <div class="stat-value" style="color:var(--accent);">124k</div>
+                        <div class="stat-label">Admin Commission (15%)</div>
+                        <div class="stat-value" style="color:var(--accent);" id="comm-earned">—</div>
                         <div class="stat-change">LKR earned</div>
                     </div>
                 </div>
@@ -688,45 +276,10 @@
                     <div class="card-body" style="padding:0;">
                         <table class="slots-table">
                             <thead>
-                            <tr><th>Booking ID</th><th>Driver</th><th>Owner</th><th>Vehicle</th><th>Date</th><th>Gross</th><th>Commission (20%)</th><th>Owner Payout (80%)</th><th>Status</th></tr>
+                            <tr><th>Booking ID</th><th>Driver</th><th>Owner</th><th>Vehicle</th><th>Date</th><th>Gross</th><th>Commission (15%)</th><th>Owner Payout (85%)</th></tr>
                             </thead>
-                            <tbody>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0381</td>
-                                <td>Kasun M.</td><td>Ruwan S.</td><td>Car</td>
-                                <td style="font-size:12px;">Mar 06</td>
-                                <td class="tx-amount-positive">300 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700;">60 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--text-muted);">240 LKR</td>
-                                <td><span class="status-pill status-completed">Settled</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0375</td>
-                                <td>Malith P.</td><td>Ruwan S.</td><td>Car</td>
-                                <td style="font-size:12px;">Mar 03</td>
-                                <td class="tx-amount-positive">450 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700;">90 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--text-muted);">360 LKR</td>
-                                <td><span class="status-pill status-completed">Settled</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0360</td>
-                                <td>Nishani F.</td><td>Dilani P.</td><td>Bike</td>
-                                <td style="font-size:12px;">Feb 28</td>
-                                <td class="tx-amount-positive">100 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700;">20 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--text-muted);">80 LKR</td>
-                                <td><span class="status-pill status-completed">Settled</span></td>
-                            </tr>
-                            <tr>
-                                <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">#PS-0355</td>
-                                <td>Kasun M.</td><td>Saman J.</td><td>Van</td>
-                                <td style="font-size:12px;">Feb 25</td>
-                                <td class="tx-amount-positive">550 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700;">110 LKR</td>
-                                <td style="font-family:'DM Mono',monospace;color:var(--text-muted);">440 LKR</td>
-                                <td><span class="status-pill status-pending">Pending</span></td>
-                            </tr>
+                            <tbody id="commission-table-body">
+                            <tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted);">Loading…</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -754,10 +307,10 @@
                             <div style="background:var(--surface2);border-radius:12px;padding:16px;border:1px solid var(--border);">
                                 <div style="font-size:13px;font-weight:700;margin-bottom:8px;">💎 Commission</div>
                                 <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);line-height:1.8;">
-                                    Commission = <span style="color:var(--accent2)">Total × 0.20</span><br>
-                                    Owner Net = <span style="color:var(--accent2)">Total × 0.80</span>
+                                    Commission = <span style="color:var(--accent2)">Total × 0.15</span><br>
+                                    Owner Net = <span style="color:var(--accent2)">Total × 0.85</span>
                                 </div>
-                                <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">e.g. 300 LKR → Admin: <b style="color:var(--accent)">60</b>, Owner: <b style="color:var(--accent)">240</b></div>
+                                <div style="margin-top:10px;font-size:11px;color:var(--text-muted);">e.g. 300 LKR → Admin: <b style="color:var(--accent)">45</b>, Owner: <b style="color:var(--accent)">255</b></div>
                             </div>
                         </div>
                     </div>
@@ -769,70 +322,36 @@
                 <div class="stats-row">
                     <div class="stat-card">
                         <div class="stat-label">Avg Booking Duration</div>
-                        <div class="stat-value">3.2h</div>
-                        <div class="stat-change">Per session</div>
+                        <div class="stat-value" id="an-avg-duration">—</div>
+                        <div class="stat-change">Per completed session</div>
                     </div>
                     <div class="stat-card orange">
                         <div class="stat-label">Peak Hour</div>
-                        <div class="stat-value">18:00</div>
-                        <div class="stat-change">Evening rush</div>
+                        <div class="stat-value" id="an-peak-hour">—</div>
+                        <div class="stat-change" id="an-peak-detail">From all bookings</div>
                     </div>
                     <div class="stat-card purple">
                         <div class="stat-label">Slot Utilization</div>
-                        <div class="stat-value">74%</div>
-                        <div class="stat-change"><span class="up">↑ 8%</span> this month</div>
+                        <div class="stat-value" id="an-slot-util">—</div>
+                        <div class="stat-change">Active bookings / total slots</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">User Retention</div>
-                        <div class="stat-value">82%</div>
-                        <div class="stat-change">Monthly active</div>
+                        <div class="stat-label">Total Revenue</div>
+                        <div class="stat-value" id="an-total-rev">—</div>
+                        <div class="stat-change">LKR all time</div>
                     </div>
                 </div>
                 <div class="analytics-grid">
                     <div class="analytics-card">
                         <div style="font-size:13px;font-weight:700;margin-bottom:14px;">Revenue by Location</div>
-                        <div style="display:flex;flex-direction:column;gap:10px;">
-                            <div>
-                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Majestic City</span><span style="color:var(--accent);font-family:'DM Mono',monospace;">48k LKR</span></div>
-                                <div style="height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="height:100%;width:80%;background:var(--accent);border-radius:3px;"></div></div>
-                            </div>
-                            <div>
-                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>One Galle Face</span><span style="color:var(--accent);font-family:'DM Mono',monospace;">36k LKR</span></div>
-                                <div style="height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="height:100%;width:60%;background:var(--accent3);border-radius:3px;"></div></div>
-                            </div>
-                            <div>
-                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Liberty Plaza</span><span style="color:var(--accent);font-family:'DM Mono',monospace;">24k LKR</span></div>
-                                <div style="height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="height:100%;width:40%;background:var(--accent2);border-radius:3px;"></div></div>
-                            </div>
-                            <div>
-                                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>Colombo City Centre</span><span style="color:var(--accent);font-family:'DM Mono',monospace;">16k LKR</span></div>
-                                <div style="height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;"><div style="height:100%;width:27%;background:var(--danger);border-radius:3px;"></div></div>
-                            </div>
+                        <div style="display:flex;flex-direction:column;gap:10px;" id="revenue-by-location">
+                            <div style="color:var(--text-muted);font-size:12px;">Loading…</div>
                         </div>
                     </div>
                     <div class="analytics-card">
                         <div style="font-size:13px;font-weight:700;margin-bottom:14px;">System Entity Summary</div>
-                        <div style="display:flex;flex-direction:column;gap:10px;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface2);border-radius:10px;">
-                                <div style="display:flex;align-items:center;gap:8px;"><span>👤</span><span style="font-size:13px;">Total Users (Drivers)</span></div>
-                                <span style="font-family:'DM Mono',monospace;color:var(--accent);font-weight:700;">1,161</span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface2);border-radius:10px;">
-                                <div style="display:flex;align-items:center;gap:8px;"><span>🏢</span><span style="font-size:13px;">Parking Owners</span></div>
-                                <span style="font-family:'DM Mono',monospace;color:var(--accent3);font-weight:700;">87</span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface2);border-radius:10px;">
-                                <div style="display:flex;align-items:center;gap:8px;"><span>🚗</span><span style="font-size:13px;">Registered Vehicles</span></div>
-                                <span style="font-family:'DM Mono',monospace;color:var(--accent2);font-weight:700;">2,340</span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface2);border-radius:10px;">
-                                <div style="display:flex;align-items:center;gap:8px;"><span>🅿</span><span style="font-size:13px;">Parking Slots</span></div>
-                                <span style="font-family:'DM Mono',monospace;color:var(--warning);font-weight:700;">312</span>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface2);border-radius:10px;">
-                                <div style="display:flex;align-items:center;gap:8px;"><span>📋</span><span style="font-size:13px;">Total Appointments</span></div>
-                                <span style="font-family:'DM Mono',monospace;color:var(--danger);font-weight:700;">5,821</span>
-                            </div>
+                        <div style="display:flex;flex-direction:column;gap:10px;" id="entity-summary">
+                            <div style="color:var(--text-muted);font-size:12px;">Loading…</div>
                         </div>
                     </div>
                 </div>
@@ -842,52 +361,34 @@
     </main>
 </div>
 
-<script>
-    const viewTitles = {
-        'admin-dashboard': 'Admin Dashboard',
-        'admin-users': 'User Management',
-        'admin-verify': 'Verify Owners',
-        'admin-appointments': 'Appointments',
-        'admin-commission': 'Commission',
-        'admin-analytics': 'Analytics'
-    };
 
-    function showView(id, btn) {
-        // Hide all views
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        // Deactivate all nav items in the same section
-        if (btn) {
-            btn.closest('.nav-section').querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-        // Show the target view
-        const target = document.getElementById(id);
-        if (target) target.classList.add('active');
-        // Update topbar title
-        const titleEl = document.getElementById('topbar-title');
-        if (titleEl && viewTitles[id]) titleEl.textContent = viewTitles[id];
-    }
-</script>
 <script src="../js/api/api.config.js"></script>
 <script src="../js/api/auth.api.js"></script>
-<script>
-    (function () {
-        const user = getCurrentUser();
-        if (!user) { window.location.href = '/index.html'; return; }
-        const initials = ((user.firstName || '')[0] || '') + ((user.lastName || '')[0] || '');
-        document.getElementById('sidebar-avatar').textContent = initials.toUpperCase() || '?';
-        document.getElementById('sidebar-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
-        const roleLabels = { DRIVER: 'Driver', OWNER: 'Parking Owner', ADMIN: 'System Administrator' };
-        document.getElementById('sidebar-role').textContent = roleLabels[user.role] || user.role;
-    })();
+<script src="../js/api/user.api.js"></script>
+<script src="../js/api/owner-verification.api.js"></script>
+<script src="../js/api/appointment.api.js"></script>
+<script src="../js/api/transaction.api.js"></script>
+<script src="../js/api/vehicle.api.js"></script>
+<script src="../js/api/slot.api.js"></script>
+<script src="../js/pages/admin-dashboard.js"></script>
 
-    document.getElementById('gear-btn').addEventListener('click', function (e) {
-        e.stopPropagation();
-        document.getElementById('gear-dropdown').classList.toggle('open');
-    });
-    document.addEventListener('click', function () {
-        document.getElementById('gear-dropdown').classList.remove('open');
-    });
-</script>
+
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal">
+    <div class="modal-box">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+            <div id="confirm-icon" class="modal-icon" style="background:rgba(255,71,87,0.15);">⚠️</div>
+            <div>
+                <div id="confirm-title" style="font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">Confirm Action</div>
+                <div style="font-size:12px;color:var(--text-muted);">This action cannot be undone</div>
+            </div>
+        </div>
+        <div id="confirm-msg" style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;line-height:1.5;"></div>
+        <div style="display:flex;gap:10px;">
+            <button id="confirm-cancel-btn" class="btn btn-ghost" style="flex:1;">Cancel</button>
+            <button id="confirm-ok-btn" class="btn btn-danger" style="flex:1;">Confirm</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>

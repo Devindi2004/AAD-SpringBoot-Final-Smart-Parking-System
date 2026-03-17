@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.dto.LoginRequestDTO;
 import org.example.backend.dto.UserDTO;
 import org.example.backend.entity.User;
+import org.example.backend.enums.UserRole;
+import org.example.backend.enums.UserStatus;
 import org.example.backend.exception.InvalidCredentialsException;
 import org.example.backend.exception.ResourceNotFoundException;
 import org.example.backend.repository.UserRepository;
@@ -26,6 +28,11 @@ public class AuthServiceImpl implements AuthService {
 
         if (!user.getPassword().equals(request.getPassword())) {
             throw new InvalidCredentialsException("Incorrect password. Please try again");
+        }
+
+        // Block owner accounts that have not yet been approved by admin
+        if (user.getRole() == UserRole.OWNER && user.getStatus() == UserStatus.INACTIVE) {
+            throw new InvalidCredentialsException("Your account is pending admin approval. Please try again later or contact support.");
         }
 
         UserDTO dto = modelMapper.map(user, UserDTO.class);

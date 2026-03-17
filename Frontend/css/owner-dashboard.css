@@ -1,0 +1,34 @@
+.gear-wrapper { position: relative; }
+.gear-dropdown {
+    display: none; position: absolute; top: calc(100% + 8px); right: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; min-width: 160px; padding: 6px; z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.gear-dropdown.open { display: block; }
+.gear-dropdown-item {
+    display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+    border-radius: 8px; cursor: pointer; font-size: 13px; color: var(--text-muted);
+    transition: background 0.15s;
+}
+.gear-dropdown-item:hover { background: var(--surface3); color: var(--text); }
+.gear-dropdown-item.danger { color: var(--danger); }
+.gear-dropdown-item.danger:hover { background: rgba(255,71,87,0.1); color: var(--danger); }
+
+/* ── Confirm Modal ── */
+#confirm-modal {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+}
+#confirm-modal.open { display: flex; }
+#confirm-modal .modal-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px; max-width: 420px; width: 90%;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.55);
+    animation: modal-in 0.18s ease;
+}
+@keyframes modal-in {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}

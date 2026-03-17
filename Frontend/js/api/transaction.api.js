@@ -8,6 +8,14 @@
 const TransactionAPI = {
 
     /**
+     * Get all transactions (admin use).
+     * GET /api/transactions
+     */
+    getAll() {
+        return apiFetch('/api/transactions');
+    },
+
+    /**
      * Process payment for an approved appointment.
      * POST /api/transactions/pay/{appointmentId}
      */

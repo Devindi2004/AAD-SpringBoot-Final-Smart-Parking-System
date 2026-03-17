@@ -1,0 +1,245 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Cabinet Grotesk', sans-serif;
+    background: #0a0f1e;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Bank Header ─────────────────────────────────── */
+.bank-header {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.bank-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.bank-logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #ffd600, #ff8f00);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; color: #1a237e;
+    font-family: 'Syne', sans-serif;
+}
+.bank-logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+}
+.bank-logo-sub {
+    font-size: 10px; font-weight: 400;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 1px;
+}
+.bank-secure-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: rgba(255,255,255,0.7);
+}
+.bank-secure-badge span { font-size: 16px; }
+
+/* ── Main layout ────────────────────────────────── */
+.payment-container {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 24px;
+    padding: 40px 24px;
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ── Order Summary card ─────────────────────────── */
+.summary-card {
+    flex: 0 0 300px;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.summary-header {
+    background: linear-gradient(135deg, #1a237e, #283593);
+    padding: 16px 20px;
+    font-size: 13px; font-weight: 700; color: #fff;
+    letter-spacing: 0.5px;
+}
+.summary-body { padding: 20px; }
+.summary-merchant {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 20px; padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.merchant-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(0,229,160,0.12); border: 1px solid rgba(0,229,160,0.25);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.merchant-name { font-size: 14px; font-weight: 700; color: #fff; }
+.merchant-sub  { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 12px; margin-bottom: 10px; color: rgba(255,255,255,0.6);
+}
+.summary-row strong { color: #e2e8f0; font-size: 13px; }
+.summary-divider { border: none; border-top: 1px solid rgba(255,255,255,0.07); margin: 14px 0; }
+.summary-total {
+    display: flex; justify-content: space-between; align-items: center;
+}
+.summary-total-label { font-size: 13px; font-weight: 700; color: #fff; }
+.summary-total-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px; font-weight: 700;
+    color: #00e5a0;
+}
+.summary-total-currency { font-size: 12px; color: rgba(255,255,255,0.45); margin-left: 4px; }
+
+/* ── Payment form card ──────────────────────────── */
+.form-card {
+    flex: 1;
+    background: #111827;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+}
+.form-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: space-between;
+}
+.form-title { font-size: 15px; font-weight: 700; color: #fff; }
+.form-subtitle { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+.card-brands { display: flex; gap: 6px; }
+.card-brand {
+    height: 22px; border-radius: 4px;
+    background: rgba(255,255,255,0.1);
+    padding: 0 8px;
+    display: flex; align-items: center;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.6);
+}
+.form-body { padding: 24px; }
+
+.form-group { margin-bottom: 18px; }
+.form-label {
+    display: block; font-size: 12px; font-weight: 600;
+    color: rgba(255,255,255,0.5); margin-bottom: 6px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+}
+.form-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #e2e8f0;
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.form-input:focus { border-color: #3b5bdb; background: rgba(59,91,219,0.06); }
+.form-input::placeholder { color: rgba(255,255,255,0.2); }
+.form-input.error { border-color: #f03e3e; }
+.input-row { display: flex; gap: 14px; }
+.input-row .form-group { flex: 1; }
+
+.card-number-wrapper { position: relative; }
+.card-type-icon {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 18px; color: rgba(255,255,255,0.3);
+}
+
+.field-error { font-size: 11px; color: #f03e3e; margin-top: 5px; display: none; }
+
+.pay-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #1a237e 0%, #3b5bdb 100%);
+    border: none; border-radius: 12px;
+    color: #fff; font-family: 'Syne', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 8px;
+}
+.pay-btn:hover { opacity: 0.9; }
+.pay-btn:active { transform: scale(0.99); }
+.pay-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.security-note {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 14px;
+}
+
+/* ── Success overlay ────────────────────────────── */
+#success-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(10, 15, 30, 0.95);
+    z-index: 100;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+.success-circle {
+    width: 90px; height: 90px; border-radius: 50%;
+    background: rgba(0,229,160,0.12);
+    border: 2px solid #00e5a0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; margin-bottom: 24px;
+    animation: pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes pop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.success-title {
+    font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+    color: #00e5a0; margin-bottom: 8px;
+}
+.success-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+.success-ref {
+    font-family: 'DM Mono', monospace; font-size: 13px;
+    color: rgba(255,255,255,0.4); margin-bottom: 32px;
+}
+.success-amount {
+    font-family: 'DM Mono', monospace; font-size: 36px; font-weight: 700;
+    color: #fff; margin-bottom: 32px;
+}
+.back-btn {
+    padding: 12px 32px;
+    background: linear-gradient(135deg, #1a237e 0%, #3b5bdb 100%);
+    border: none; border-radius: 12px;
+    color: #fff; font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: opacity 0.2s;
+}
+.back-btn:hover { opacity: 0.85; }
+
+/* ── Bank footer ────────────────────────────────── */
+.bank-footer {
+    background: #070c1a;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 12px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 11px; color: rgba(255,255,255,0.25);
+}
+
+/* Loading spinner */
+.spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -18,6 +18,10 @@ public class TransactionDTO {
     private String bookingCode;
     private String driverFirstName;
     private String driverLastName;
+    private String ownerFirstName;
+    private String ownerLastName;
+    private String vehicleNumber;
+    private String vehicleType;
     private String slotNumber;
     private String locationName;
     private LocalDateTime startTime;

@@ -56,4 +56,17 @@ const UserAPI = {
             method: 'DELETE',
         });
     },
+
+    /**
+     * Toggle a user's status between ACTIVE and INACTIVE.
+     * PATCH /api/users/{id}/status?status=ACTIVE|INACTIVE
+     * @param {number} id
+     * @param {'ACTIVE'|'INACTIVE'} status
+     * @returns {Promise<UserDTO>}
+     */
+    updateStatus(id, status) {
+        return apiFetch(`/api/users/${id}/status?status=${status}`, {
+            method: 'PATCH',
+        });
+    },
 };

@@ -34,4 +34,9 @@ public class UserController {
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
+
+    @PatchMapping("/{id}/status")
+    public UserDTO updateStatus(@PathVariable Long id, @RequestParam String status) {
+        return userService.updateStatus(id, status);
+    }
 }

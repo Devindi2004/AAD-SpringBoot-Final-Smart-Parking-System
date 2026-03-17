@@ -121,10 +121,18 @@ public class TransactionServiceImpl implements TransactionService {
                 dto.setDriverFirstName(a.getDriver().getFirstName());
                 dto.setDriverLastName(a.getDriver().getLastName());
             }
+            if (a.getVehicle() != null) {
+                dto.setVehicleNumber(a.getVehicle().getVehicleNumber());
+                dto.setVehicleType(a.getVehicle().getType() != null ? a.getVehicle().getType().name() : null);
+            }
             if (a.getSlot() != null) {
                 dto.setSlotNumber(a.getSlot().getSlotNumber());
                 if (a.getSlot().getLocation() != null) {
                     dto.setLocationName(a.getSlot().getLocation().getName());
+                    if (a.getSlot().getLocation().getOwner() != null) {
+                        dto.setOwnerFirstName(a.getSlot().getLocation().getOwner().getFirstName());
+                        dto.setOwnerLastName(a.getSlot().getLocation().getOwner().getLastName());
+                    }
                 }
             }
         }

@@ -14,4 +14,6 @@ public interface UserService {
 
     void deleteUser(Long id);
 
+    UserDTO updateStatus(Long id, String status);
+
 }

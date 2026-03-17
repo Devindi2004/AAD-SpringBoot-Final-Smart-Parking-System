@@ -1,0 +1,1062 @@
+/**
+ * ParkSmart — Owner Dashboard
+ * Depends on: api.config.js, auth.api.js, location.api.js, slot.api.js, appointment.api.js, transaction.api.js
+ */
+
+// ── Session & UI init ──────────────────────────────────────────────────────
+    (function () {
+        const user = getCurrentUser();
+        if (!user) { window.location.href = '../index.html'; return; }
+        const initials = ((user.firstName || '')[0] || '') + ((user.lastName || '')[0] || '');
+        document.getElementById('sidebar-avatar').textContent = initials.toUpperCase() || '?';
+        document.getElementById('sidebar-name').textContent = (user.firstName || '') + ' ' + (user.lastName || '');
+        const roleLabels = { DRIVER: 'Driver', OWNER: 'Parking Owner', ADMIN: 'System Administrator' };
+        document.getElementById('sidebar-role').textContent = roleLabels[user.role] || user.role;
+    })();
+
+    document.getElementById('topbar-date').textContent =
+        new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: '2-digit' });
+
+    // ── Theme toggle ───────────────────────────────────────────────────────────
+    (function () {
+        const btn = document.getElementById('theme-toggle-btn');
+        function applyTheme(light) {
+            document.body.classList.toggle('light', light);
+            btn.textContent = light ? '🌙' : '☀️';
+            btn.title = light ? 'Switch to night mode' : 'Switch to day mode';
+        }
+        applyTheme(localStorage.getItem('theme') === 'light');
+        btn.addEventListener('click', function () {
+            const isLight = !document.body.classList.contains('light');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            applyTheme(isLight);
+            ownerSlots.setMapTheme(isLight);
+        });
+    })();
+
+
+    // ── Dashboard stats ────────────────────────────────────────────────────────
+    function fmt(val) {
+        return Number(val || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    async function loadDashboardStats() {
+        const user = getCurrentUser();
+        if (!user) return;
+        try {
+            const [slots, appointments, transactions] = await Promise.all([
+                SlotAPI.getByOwner(user.id),
+                AppointmentAPI.getByOwner(user.id),
+                TransactionAPI.getByOwnerId(user.id),
+            ]);
+
+            // ── Total Slots ───────────────────────────────────────────────────
+            const total    = slots.length;
+            const active   = slots.filter(s => s.status !== 'INACTIVE').length;
+            const inactive = slots.filter(s => s.status === 'INACTIVE').length;
+            document.getElementById('dash-total-slots').textContent  = total;
+            document.getElementById('dash-slots-detail').textContent =
+                total === 0 ? 'No slots added yet' : `${active} Active, ${inactive} Inactive`;
+
+            // ── Today's Bookings ──────────────────────────────────────────────
+            const todayStr = new Date().toDateString();
+            const todayCount = appointments.filter(a =>
+                a.startTime && new Date(a.startTime).toDateString() === todayStr
+            ).length;
+            document.getElementById('dash-today-bookings').textContent = todayCount;
+            document.getElementById('dash-today-detail').textContent =
+                todayCount === 0 ? 'No bookings today' : 'appointments today';
+
+            // ── Pending Requests ──────────────────────────────────────────────
+            const pendingCount = appointments.filter(a => a.status === 'PENDING').length;
+            document.getElementById('dash-pending-count').textContent  = pendingCount;
+            document.getElementById('dash-pending-big').textContent    = pendingCount;
+            document.getElementById('dash-pending-badge').textContent  = pendingCount;
+            document.getElementById('dash-pending-detail').textContent =
+                pendingCount === 0 ? 'No pending requests' : 'Needs attention';
+            document.getElementById('dash-pending-label').textContent  =
+                pendingCount === 0 ? 'No pending requests' : 'requests awaiting approval';
+
+            // ── Monthly Revenue ───────────────────────────────────────────────
+            const now = new Date();
+            const monthlyNet = transactions
+                .filter(t => {
+                    if (!t.paymentDate) return false;
+                    const d = new Date(t.paymentDate);
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                })
+                .reduce((s, t) => s + (t.ownerEarning || 0), 0);
+            document.getElementById('dash-monthly-revenue').textContent = fmt(monthlyNet);
+
+            // ── Daily Earnings chart (this week Mon–Sun) ──────────────────────
+            const jsDay   = now.getDay();                      // 0=Sun … 6=Sat
+            const todayIdx = jsDay === 0 ? 6 : jsDay - 1;     // remap to Mon=0 … Sun=6
+
+            const weekDays = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(now);
+                d.setDate(now.getDate() - todayIdx + i);
+                return d;
+            });
+
+            const dayEarnings = weekDays.map(day =>
+                transactions
+                    .filter(t => t.paymentDate && new Date(t.paymentDate).toDateString() === day.toDateString())
+                    .reduce((s, t) => s + (t.ownerEarning || 0), 0)
+            );
+
+            const inWeekTxns = transactions.filter(t =>
+                t.paymentDate && weekDays.some(d => new Date(t.paymentDate).toDateString() === d.toDateString())
+            );
+            const weekGross = inWeekTxns.reduce((s, t) => s + (t.totalAmount  || 0), 0);
+            const weekNet   = inWeekTxns.reduce((s, t) => s + (t.ownerEarning || 0), 0);
+
+            document.getElementById('dash-chart-gross').innerHTML =
+                `${fmt(weekGross)} <span style="font-size:14px;color:var(--text-muted);font-weight:400">LKR</span>`;
+            document.getElementById('dash-chart-net').textContent = `${fmt(weekNet)} LKR`;
+
+            const maxVal = Math.max(...dayEarnings, 1);
+            const dayLabelEls = document.querySelectorAll('.day-label-span');
+            dayEarnings.forEach((val, i) => {
+                const bar = document.getElementById(`dash-bar-${i}`);
+                const pct = Math.max(Math.round((val / maxVal) * 100), 4);
+                bar.style.height = pct + '%';
+                bar.querySelector('.bar-tip').textContent = val > 0 ? fmt(val) : '0';
+                bar.classList.toggle('highlighted', i === todayIdx);
+                if (dayLabelEls[i]) {
+                    dayLabelEls[i].style.color      = i === todayIdx ? 'var(--accent)' : '';
+                    dayLabelEls[i].style.fontWeight = i === todayIdx ? '600' : '';
+                }
+            });
+
+            // ── Commission ring (all-time totals) ─────────────────────────────
+            const allGross      = transactions.reduce((s, t) => s + (t.totalAmount  || 0), 0);
+            const allCommission = transactions.reduce((s, t) => s + (t.commission   || 0), 0);
+            const allNet        = transactions.reduce((s, t) => s + (t.ownerEarning || 0), 0);
+            document.getElementById('dash-ring-gross').textContent      = fmt(allGross)      + ' LKR';
+            document.getElementById('dash-ring-commission').textContent = fmt(allCommission) + ' LKR';
+            document.getElementById('dash-ring-net').textContent        = fmt(allNet)        + ' LKR';
+
+        } catch (e) {
+            console.error('Dashboard stats error', e);
+            document.getElementById('dash-slots-detail').textContent = 'Failed to load';
+        }
+    }
+    loadDashboardStats();
+
+    // ── Appointment Requests ───────────────────────────────────────────────────
+    async function loadAppointmentRequests() {
+        const user = getCurrentUser();
+        const list = document.getElementById('requests-list');
+        list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--text-muted);"><div style="font-size:32px;margin-bottom:10px;">📋</div><div style="font-size:13px;">Loading requests…</div></div>';
+
+        try {
+            const appointments = await AppointmentAPI.getByOwner(user.id);
+            const pending = appointments.filter(a => a.status === 'PENDING');
+
+            if (pending.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:48px 0;color:var(--text-muted);"><div style="font-size:36px;margin-bottom:12px;">✅</div><div style="font-size:14px;font-weight:600;margin-bottom:4px;">No pending requests</div><div style="font-size:12px;">All caught up! New requests will appear here.</div></div>';
+                return;
+            }
+
+            list.innerHTML = '';
+            pending.forEach(a => {
+                const start   = a.startTime ? new Date(a.startTime) : null;
+                const end     = a.endTime   ? new Date(a.endTime)   : null;
+                const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—';
+                const startT  = start ? start.toTimeString().slice(0, 5) : '—';
+                const endT    = end   ? end.toTimeString().slice(0, 5)   : '—';
+                const durH    = a.duration ? (a.duration / 60).toFixed(1).replace('.0', '') : '—';
+                const ago     = a.createdAt ? timeAgo(new Date(a.createdAt)) : '';
+                const vehDetail = [a.vehicleNumber, a.vehicleColor, a.vehicleModel, a.vehicleType].filter(Boolean).join(' · ');
+
+                const card = document.createElement('div');
+                card.className = 'approval-card';
+                card.innerHTML = `
+                    <div class="approval-header">
+                        <div class="approval-title">${a.driverFirstName || ''} ${a.driverLastName || ''}</div>
+                        <div class="approval-time">${ago}</div>
+                    </div>
+                    <div class="approval-details">${vehDetail}</div>
+                    <div class="approval-meta">
+                        <div class="meta-chip">🅿 Slot ${a.slotNumber || '—'}</div>
+                        <div class="meta-chip">📍 ${a.locationName || '—'}</div>
+                        <div class="meta-chip">📅 ${dateStr}</div>
+                        <div class="meta-chip">⏰ ${startT}–${endT}</div>
+                        <div class="meta-chip">⏱ ${durH} h</div>
+                        <div class="meta-chip">💰 ${a.totalAmount ? Math.round(a.totalAmount) + ' LKR' : '—'}</div>
+                        <div style="margin-left:auto;display:flex;gap:6px;align-items:center;">
+                            <button class="btn btn-primary btn-sm" onclick="handleAppointment(${a.id}, 'ACTIVE')">✓ Accept</button>
+                            <button class="btn btn-danger btn-sm"  onclick="handleAppointment(${a.id}, 'REJECTED')">✕ Reject</button>
+                        </div>
+                    </div>`;
+                list.appendChild(card);
+            });
+        } catch (e) {
+            list.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--danger);font-size:13px;">Failed to load requests: ${e.message}</div>`;
+        }
+    }
+
+    async function handleAppointment(id, status) {
+        try {
+            await AppointmentAPI.updateStatus(id, status);
+            showOwnerToast(status === 'ACTIVE' ? 'Request accepted! Slot marked as occupied.' : 'Request rejected.');
+            loadAppointmentRequests();
+        } catch (e) {
+            showOwnerToast('Failed to update: ' + (e.message || 'Unknown error'), 'error');
+        }
+    }
+
+    function switchRequestTab(btn) {
+        document.querySelectorAll('#requests-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        document.getElementById('requests-list').style.display    = tab === 'pending'  ? '' : 'none';
+        document.getElementById('requests-history').style.display = tab === 'history' ? '' : 'none';
+        if (tab === 'history') loadRequestHistory();
+    }
+
+    async function loadRequestHistory() {
+        const user  = getCurrentUser();
+        const tbody = document.getElementById('history-tbody');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">Loading…</td></tr>';
+
+        try {
+            const appointments = await AppointmentAPI.getByOwner(user.id);
+            const history = appointments.filter(a => a.status !== 'PENDING');
+
+            if (history.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text-muted);">No history yet.</td></tr>';
+                return;
+            }
+
+            const statusClass = { ACTIVE: 'status-active', COMPLETED: 'status-completed', REJECTED: 'status-rejected', CANCELLED: 'status-rejected' };
+            const statusLabel = { ACTIVE: 'Accepted', COMPLETED: 'Completed', REJECTED: 'Rejected', CANCELLED: 'Cancelled' };
+
+            tbody.innerHTML = history.map(a => {
+                const start   = a.startTime ? new Date(a.startTime) : null;
+                const end     = a.endTime   ? new Date(a.endTime)   : null;
+                const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) : '—';
+                const timeStr = (start && end) ? start.toTimeString().slice(0,5) + '–' + end.toTimeString().slice(0,5) : '—';
+                const durH    = a.duration ? (a.duration / 60).toFixed(1).replace('.0','') + 'h' : '—';
+                const driverName = [a.driverFirstName, a.driverLastName].filter(Boolean).join(' ') || '—';
+                const veh     = [a.vehicleNumber, a.vehicleColor, a.vehicleModel].filter(Boolean).join(' · ') || '—';
+                const loc     = [a.slotNumber, a.locationName].filter(Boolean).join(' · ') || '—';
+                const pill    = `<span class="status-pill ${statusClass[a.status] || ''}">${statusLabel[a.status] || a.status}</span>`;
+                return `<tr>
+                    <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">${a.bookingCode || '—'}</span></td>
+                    <td>${driverName}</td>
+                    <td style="font-size:12px;">${veh}</td>
+                    <td style="font-size:12px;">${loc}</td>
+                    <td style="font-size:12px;">${dateStr} · ${timeStr}</td>
+                    <td>${durH}</td>
+                    <td style="font-family:'DM Mono',monospace;">${a.totalAmount != null ? Math.round(a.totalAmount) + ' LKR' : '—'}</td>
+                    <td>${pill}</td>
+                </tr>`;
+            }).join('');
+        } catch (e) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--danger);">Failed to load history: ${e.message}</td></tr>`;
+        }
+    }
+
+    function timeAgo(date) {
+        const mins = Math.floor((Date.now() - date) / 60000);
+        if (mins < 1)  return 'just now';
+        if (mins < 60) return mins + ' min ago';
+        const hrs = Math.floor(mins / 60);
+        if (hrs < 24)  return hrs + 'h ago';
+        return Math.floor(hrs / 24) + 'd ago';
+    }
+
+    function showOwnerToast(msg, type = 'success') {
+        const el = document.createElement('div');
+        el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+            border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+            background:${type === 'success' ? 'var(--accent)' : 'var(--danger)'};
+            color:${type === 'success' ? '#000' : '#fff'};`;
+        el.textContent = msg;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 3000);
+    }
+
+    // ── Intercept showView to load locations when tab opens ───────────────────
+    (function () {
+        const _orig = window.showView;
+        window.showView = function (id, btn) {
+            if (typeof _orig === 'function') _orig(id, btn);
+            if (id === 'owner-slots')     ownerSlots.loadLocations();
+            if (id === 'owner-dashboard') loadDashboardStats();
+            if (id === 'owner-requests')  loadAppointmentRequests();
+            if (id === 'owner-earnings')  loadEarnings();
+        };
+    })();
+
+    // ── Google Maps dynamic loader ─────────────────────────────────────────────
+    window.initLocationMap = function () { /* callback stub; map init is lazy */ };
+    (function () {
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${CONFIG.GOOGLE_MAPS_API_KEY}&callback=initLocationMap&loading=async`;
+        s.async = true; s.defer = true;
+        document.head.appendChild(s);
+    })();
+
+    // ── Dark map style ─────────────────────────────────────────────────────────
+    const DARK_MAP_STYLES = [
+        { elementType: 'geometry',            stylers: [{ color: '#1c2230' }] },
+        { elementType: 'labels.text.stroke',  stylers: [{ color: '#1c2230' }] },
+        { elementType: 'labels.text.fill',    stylers: [{ color: '#8b949e' }] },
+        { featureType: 'road',       elementType: 'geometry',        stylers: [{ color: '#212840' }] },
+        { featureType: 'road',       elementType: 'geometry.stroke', stylers: [{ color: '#161b22' }] },
+        { featureType: 'road',       elementType: 'labels.text.fill',stylers: [{ color: '#6e7681' }] },
+        { featureType: 'water',      elementType: 'geometry',        stylers: [{ color: '#0d1117' }] },
+        { featureType: 'poi',        elementType: 'geometry',        stylers: [{ color: '#1c2230' }] },
+        { featureType: 'poi',        elementType: 'labels',          stylers: [{ visibility: 'off' }] },
+        { featureType: 'transit',    elementType: 'geometry',        stylers: [{ color: '#1c2230' }] },
+        { featureType: 'administrative', elementType: 'geometry.stroke', stylers: [{ color: '#212840' }] },
+    ];
+
+    // ── Parking Locations & Slots Manager ─────────────────────────────────────
+    const ownerSlots = (() => {
+        let selectedLocationId = null;
+        let selectedLocationCapacity = 0;
+        let currentSlots = [];
+        let currentLocations = [];      // cached for edit lookup
+        let editingLocationId = null;   // null = create mode, number = edit mode
+
+        // ── Map state ─────────────────────────────────────────────────────────
+        let map = null;
+        let selectedMarker = null;
+        let locationMarkers = [];
+
+        const vehicleLabels = {
+            CAR: '🚗 Car', BIKE: '🏍 Bike', VAN: '🚐 Van',
+            TRUCK: '🚛 Truck', THREE_WHEELER: '🛺 Three-Wheeler'
+        };
+
+        const statusBadge = {
+            AVAILABLE: '<span class="slot-badge slot-open">Available</span>',
+            OCCUPIED:  '<span class="slot-badge slot-full">Occupied</span>',
+            INACTIVE:  '<span class="slot-badge" style="background:rgba(255,176,32,0.12);color:var(--warning)">Inactive</span>',
+        };
+
+        function toast(msg, type = 'success') {
+            const el = document.createElement('div');
+            el.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;
+                border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.4);
+                background:${type === 'success' ? 'var(--accent)' : 'var(--danger)'};
+                color:${type === 'success' ? '#000' : '#fff'};`;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        // ── Map helpers ───────────────────────────────────────────────────────
+
+        function initMap() {
+            if (map) {
+                // Already initialised — just resize and show existing pins
+                google.maps.event.trigger(map, 'resize');
+                refreshExistingPins();
+                return;
+            }
+            map = new google.maps.Map(document.getElementById('location-picker-map'), {
+                center: { lat: 6.9271, lng: 79.8612 },
+                zoom: 13,
+                styles: document.body.classList.contains('light') ? [] : DARK_MAP_STYLES,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+            });
+
+            map.addListener('click', function (event) {
+                const lat = event.latLng.lat();
+                const lng = event.latLng.lng();
+
+                if (selectedMarker) {
+                    selectedMarker.setPosition(event.latLng);
+                } else {
+                    selectedMarker = new google.maps.Marker({
+                        position: event.latLng,
+                        map: map,
+                        title: 'Selected Location',
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 11,
+                            fillColor: '#00e5a0',
+                            fillOpacity: 1,
+                            strokeWeight: 2.5,
+                            strokeColor: '#ffffff',
+                        },
+                        animation: google.maps.Animation.DROP,
+                        zIndex: 10,
+                    });
+                }
+
+                document.getElementById('loc-lat').value = lat.toFixed(6);
+                document.getElementById('loc-lng').value = lng.toFixed(6);
+                document.getElementById('loc-coords-display').style.display = 'block';
+                document.getElementById('loc-coords-text').textContent =
+                    `Lat: ${lat.toFixed(6)}  ·  Lng: ${lng.toFixed(6)}`;
+
+                // Reverse geocode → auto-fill address
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ location: event.latLng }, function (results, status) {
+                    if (status === 'OK' && results[0]) {
+                        document.getElementById('loc-address').value = results[0].formatted_address;
+                    }
+                    checkLocForm();
+                });
+                checkLocForm();
+            });
+
+            refreshExistingPins();
+        }
+
+        function refreshExistingPins() {
+            const user = getCurrentUser();
+            if (!user || !map) return;
+            LocationAPI.getByOwner(user.id).then(showExistingPins).catch(() => {});
+        }
+
+        function showExistingPins(locations) {
+            locationMarkers.forEach(m => m.setMap(null));
+            locationMarkers = [];
+            if (!map || !locations) return;
+            locations.forEach(loc => {
+                const marker = new google.maps.Marker({
+                    position: { lat: loc.latitude, lng: loc.longitude },
+                    map: map,
+                    title: loc.name,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 9,
+                        fillColor: '#ffb020',
+                        fillOpacity: 0.9,
+                        strokeWeight: 2,
+                        strokeColor: '#ffffff',
+                    },
+                });
+                const info = new google.maps.InfoWindow({
+                    content: `<div style="color:#000;font-size:12px;font-family:sans-serif;line-height:1.5;">
+                        <strong>${loc.name}</strong><br>${loc.address}<br>
+                        <span style="color:#333;">${loc.pricePerHour} LKR/h &nbsp;·&nbsp; ${loc.availableSlots} free</span>
+                    </div>`,
+                });
+                marker.addListener('click', () => info.open(map, marker));
+                locationMarkers.push(marker);
+            });
+        }
+
+        function resetLocationForm() {
+            editingLocationId = null;
+            ['loc-name', 'loc-address', 'loc-capacity', 'loc-rate'].forEach(id =>
+                document.getElementById(id).value = '');
+            document.getElementById('loc-lat').value = '';
+            document.getElementById('loc-lng').value = '';
+            document.getElementById('loc-coords-display').style.display = 'none';
+            const btn = document.getElementById('loc-save-btn');
+            btn.disabled = true; btn.style.opacity = '0.5'; btn.style.cursor = 'not-allowed';
+            btn.textContent = '+ Add Location';
+            document.querySelector('#location-form .card-title').textContent = 'Add New Parking Location';
+            if (selectedMarker) { selectedMarker.setMap(null); selectedMarker = null; }
+        }
+
+        function editLocation(id) {
+            const loc = currentLocations.find(l => l.id === id);
+            if (!loc) return;
+            editingLocationId = loc.id;
+            // Open the form
+            const formEl = document.getElementById('location-form');
+            formEl.style.display = 'block';
+            // Pre-fill fields
+            document.getElementById('loc-name').value    = loc.name;
+            document.getElementById('loc-address').value = loc.address;
+            document.getElementById('loc-capacity').value = loc.capacity;
+            document.getElementById('loc-rate').value    = loc.pricePerHour;
+            document.getElementById('loc-lat').value     = loc.latitude;
+            document.getElementById('loc-lng').value     = loc.longitude;
+            document.getElementById('loc-coords-display').style.display = 'block';
+            document.getElementById('loc-coords-text').textContent =
+                `Lat: ${parseFloat(loc.latitude).toFixed(6)}  ·  Lng: ${parseFloat(loc.longitude).toFixed(6)}`;
+            // Update labels
+            document.getElementById('loc-save-btn').textContent = 'Update Location';
+            document.querySelector('#location-form .card-title').textContent = 'Edit Parking Location';
+            // Enable save (all fields filled)
+            checkLocForm();
+            // Scroll form into view
+            formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Init / refresh map and place existing pin
+            setTimeout(() => {
+                if (typeof google !== 'undefined' && google.maps) {
+                    initMap();
+                    const latLng = { lat: parseFloat(loc.latitude), lng: parseFloat(loc.longitude) };
+                    if (selectedMarker) {
+                        selectedMarker.setPosition(latLng);
+                    } else {
+                        selectedMarker = new google.maps.Marker({
+                            position: latLng,
+                            map: map,
+                            title: 'Selected Location',
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 11,
+                                fillColor: '#00e5a0',
+                                fillOpacity: 1,
+                                strokeWeight: 2.5,
+                                strokeColor: '#ffffff',
+                            },
+                            animation: google.maps.Animation.DROP,
+                            zIndex: 10,
+                        });
+                    }
+                    map.panTo(latLng);
+                }
+            }, 120);
+        }
+
+        function checkLocForm() {
+            const name     = document.getElementById('loc-name').value.trim();
+            const address  = document.getElementById('loc-address').value.trim();
+            const capacity = document.getElementById('loc-capacity').value;
+            const rate     = document.getElementById('loc-rate').value;
+            const lat      = document.getElementById('loc-lat').value;
+            const lng      = document.getElementById('loc-lng').value;
+            const valid = !!(name && address && capacity && rate && lat && lng);
+            const btn = document.getElementById('loc-save-btn');
+            btn.disabled = !valid;
+            btn.style.opacity = valid ? '1' : '0.5';
+            btn.style.cursor  = valid ? 'pointer' : 'not-allowed';
+        }
+
+        // ── Toggle form open/close ─────────────────────────────────────────────
+
+        function toggleForm(id) {
+            const el = document.getElementById(id);
+            const opening = el.style.display === 'none';
+            el.style.display = opening ? 'block' : 'none';
+            if (id === 'location-form') {
+                if (opening) {
+                    // Lazy-init map once DOM is visible
+                    setTimeout(() => {
+                        if (typeof google !== 'undefined' && google.maps) initMap();
+                    }, 120);
+                } else {
+                    resetLocationForm();
+                }
+            }
+        }
+
+        // ── LOCATIONS ──────────────────────────────────────────────────────────
+
+        async function loadLocations() {
+            const user = getCurrentUser();
+            if (!user) return;
+            document.getElementById('locations-tbody').innerHTML =
+                '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">Loading...</td></tr>';
+            try {
+                const locs = await LocationAPI.getByOwner(user.id);
+                currentLocations = locs || [];
+                renderLocations(locs);
+            } catch (e) {
+                document.getElementById('locations-tbody').innerHTML =
+                    `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger)">${e.message}</td></tr>`;
+            }
+        }
+
+        function renderLocations(locs) {
+            const tbody = document.getElementById('locations-tbody');
+            if (!locs || locs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text-muted)">No locations yet. Add your first parking location below.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = locs.map(loc => `
+                <tr>
+                    <td><span style="font-family:'DM Mono',monospace;color:var(--accent)">#LOC-${String(loc.id).padStart(3,'0')}</span></td>
+                    <td style="font-weight:600">${loc.name}</td>
+                    <td style="font-size:12px;color:var(--text-muted)">${loc.address}</td>
+                    <td>${loc.capacity}</td>
+                    <td><span class="slot-badge ${loc.availableSlots > 0 ? 'slot-open' : 'slot-full'}">${loc.availableSlots} Free</span></td>
+                    <td style="font-family:'DM Mono',monospace;">${loc.pricePerHour} LKR</td>
+                    <td>
+                        <span class="slot-badge ${loc.active ? 'slot-open' : 'slot-full'}" style="cursor:pointer"
+                              onclick="ownerSlots.toggleActive(${loc.id}, this)">
+                            ${loc.active ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td style="text-align:center">
+                        <div style="display:flex;gap:4px;justify-content:center;">
+                            <button class="btn btn-sm"
+                                style="background:rgba(255,176,32,0.12);color:var(--warning);border:1px solid rgba(255,176,32,0.3);"
+                                onclick="ownerSlots.manageSlots(${loc.id},'${loc.name.replace(/'/g,"\\'")}','${loc.address.replace(/'/g,"\\'")}',${loc.capacity})">
+                                Slots
+                            </button>
+                            <button class="btn btn-sm"
+                                style="background:rgba(0,229,160,0.12);color:var(--accent);border:1px solid rgba(0,229,160,0.3);"
+                                onclick="ownerSlots.editLocation(${loc.id})">
+                                Edit
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="ownerSlots.deleteLocation(${loc.id})">Delete</button>
+                        </div>
+                    </td>
+                </tr>`).join('');
+        }
+
+        async function submitLocation() {
+            const user = getCurrentUser();
+            const name     = document.getElementById('loc-name').value.trim();
+            const address  = document.getElementById('loc-address').value.trim();
+            const lat      = parseFloat(document.getElementById('loc-lat').value);
+            const lng      = parseFloat(document.getElementById('loc-lng').value);
+            const capacity = parseInt(document.getElementById('loc-capacity').value);
+            const price    = parseFloat(document.getElementById('loc-rate').value);
+
+            if (!name || !address || isNaN(lat) || isNaN(lng) || isNaN(capacity) || isNaN(price)) {
+                toast('Please fill all required fields', 'error'); return;
+            }
+
+            // Duplicate name check (case-insensitive, excluding self when editing)
+            const duplicate = currentLocations.find(l =>
+                l.name.trim().toLowerCase() === name.toLowerCase() && l.id !== editingLocationId
+            );
+            if (duplicate) {
+                toast(`A location named "${name}" already exists. Please use a different name.`, 'error');
+                return;
+            }
+
+            try {
+                if (editingLocationId) {
+                    // Capacity reduction check: cannot go below existing slot count
+                    const existingSlots = await SlotAPI.getByLocation(editingLocationId).catch(() => []);
+                    if (capacity < existingSlots.length) {
+                        toast(`Cannot reduce capacity to ${capacity} — this location already has ${existingSlots.length} slot(s). Remove slots first.`, 'error');
+                        return;
+                    }
+                    await LocationAPI.update(editingLocationId, { name, address, latitude: lat, longitude: lng, capacity, pricePerHour: price });
+                    toast('Location updated successfully');
+                } else {
+                    await LocationAPI.create({ name, address, latitude: lat, longitude: lng, capacity, pricePerHour: price, ownerId: user.id });
+                    toast('Location added successfully');
+                }
+                document.getElementById('location-form').style.display = 'none';
+                resetLocationForm();
+                loadLocations();
+                refreshExistingPins();
+            } catch (e) { toast(e.message, 'error'); }
+        }
+
+        function toggleActive(id, el) {
+            const loc = currentLocations.find(l => l.id === id);
+            const locName = loc ? loc.name : 'this location';
+            const isCurrentlyActive = el.textContent.trim() === 'Active';
+
+            if (isCurrentlyActive) {
+                showConfirm(
+                    'Deactivate Location',
+                    `Deactivate "${locName}"? It will be hidden from drivers and any pending bookings may be affected.`,
+                    async () => {
+                        try {
+                            const updated = await LocationAPI.toggleActive(id);
+                            el.textContent = updated.active ? 'Active' : 'Inactive';
+                            el.className = `slot-badge ${updated.active ? 'slot-open' : 'slot-full'}`;
+                        } catch (e) { toast(e.message, 'error'); }
+                    },
+                    { okLabel: 'Deactivate', okClass: 'btn-danger' }
+                );
+            } else {
+                // Activating — no confirmation needed
+                LocationAPI.toggleActive(id)
+                    .then(updated => {
+                        el.textContent = updated.active ? 'Active' : 'Inactive';
+                        el.className = `slot-badge ${updated.active ? 'slot-open' : 'slot-full'}`;
+                    })
+                    .catch(e => toast(e.message, 'error'));
+            }
+        }
+
+        function showConfirm(title, message, onConfirm, { okLabel = 'Delete', okClass = 'btn-danger' } = {}) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-msg').innerHTML    = message;
+            const modal     = document.getElementById('confirm-modal');
+            const okBtn     = document.getElementById('confirm-ok-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+            okBtn.textContent = okLabel;
+            okBtn.className   = `btn ${okClass}`;
+            okBtn.style.flex  = '1';
+            modal.classList.add('open');
+            function close() {
+                modal.classList.remove('open');
+                okBtn.removeEventListener('click', handleOk);
+                cancelBtn.removeEventListener('click', handleCancel);
+                modal.removeEventListener('click', handleBackdrop);
+            }
+            function handleOk()       { close(); onConfirm(); }
+            function handleCancel()   { close(); }
+            function handleBackdrop(e){ if (e.target === modal) close(); }
+            okBtn.addEventListener('click', handleOk);
+            cancelBtn.addEventListener('click', handleCancel);
+            modal.addEventListener('click', handleBackdrop);
+        }
+
+        function showLocationError(msg) {
+            const existing = document.getElementById('loc-delete-error');
+            if (existing) existing.remove();
+            const el = document.createElement('div');
+            el.id = 'loc-delete-error';
+            el.innerHTML = `
+                <div style="display:flex;align-items:flex-start;gap:14px;
+                            background:rgba(255,71,87,0.07);border:1px solid rgba(255,71,87,0.25);
+                            border-radius:16px;padding:18px 20px;margin-top:12px;">
+                    <div style="width:38px;height:38px;background:rgba(255,71,87,0.15);border-radius:50%;
+                                display:flex;align-items:center;justify-content:center;flex-shrink:0;
+                                font-size:18px;line-height:1;">⚠</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:700;color:var(--danger);font-size:13px;margin-bottom:5px;
+                                    font-family:'Syne',sans-serif;">Cannot Delete Location</div>
+                        <div style="color:var(--text-muted);font-size:12px;line-height:1.5;">${msg}</div>
+                        <div style="margin-top:8px;font-size:11px;color:var(--text-dim);line-height:1.5;">
+                            Click <span style="color:var(--warning);font-weight:600;">Slots</span> on that row to open the slot manager, then delete all slots before removing the location.
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('loc-delete-error').remove()"
+                            style="background:none;border:none;color:var(--text-dim);cursor:pointer;
+                                   font-size:20px;padding:0;flex-shrink:0;line-height:1;margin-top:-2px;">×</button>
+                </div>`;
+            const tableCard = document.querySelector('#locations-panel .card');
+            tableCard.insertAdjacentElement('afterend', el);
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            setTimeout(() => { const e = document.getElementById('loc-delete-error'); if (e) e.remove(); }, 10000);
+        }
+
+        function deleteLocation(id) {
+            const loc = currentLocations.find(l => l.id === id);
+            const locName = loc ? loc.name : 'this location';
+            showConfirm(
+                'Delete Location',
+                `Are you sure you want to delete "${locName}"? All associated data will be permanently removed.`,
+                async () => {
+                    const existing = document.getElementById('loc-delete-error');
+                    if (existing) existing.remove();
+                    try {
+                        await LocationAPI.delete(id);
+                        toast('Location deleted');
+                        loadLocations();
+                    } catch (e) { showLocationError(e.message); }
+                }
+            );
+        }
+
+        // ── SLOTS ──────────────────────────────────────────────────────────────
+
+        function manageSlots(locationId, name, address, capacity) {
+            selectedLocationId = locationId;
+            selectedLocationCapacity = parseInt(capacity) || 0;
+            document.getElementById('slots-location-name').textContent = name;
+            document.getElementById('slots-location-address').textContent = address;
+            document.getElementById('locations-panel').style.display = 'none';
+            document.getElementById('slots-panel').style.display = 'block';
+            loadSlots(locationId);
+        }
+
+        function closeSlots() {
+            document.getElementById('slots-panel').style.display = 'none';
+            document.getElementById('locations-panel').style.display = 'block';
+            selectedLocationId = null;
+            currentSlots = [];
+            loadLocations(); // refresh available counts when returning
+        }
+
+        async function loadSlots(locationId) {
+            document.getElementById('slots-tbody').innerHTML =
+                '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Loading slots...</td></tr>';
+            try {
+                const [slots, activeAppts] = await Promise.all([
+                    SlotAPI.getByLocation(locationId),
+                    AppointmentAPI.getActiveByLocation(locationId).catch(() => []),
+                ]);
+                currentSlots = slots || [];
+                // Build slotId → appointments map
+                const apptMap = {};
+                (activeAppts || []).forEach(a => {
+                    if (!apptMap[a.slotId]) apptMap[a.slotId] = [];
+                    apptMap[a.slotId].push(a);
+                });
+                renderSlots(slots, apptMap);
+            } catch (e) {
+                document.getElementById('slots-tbody').innerHTML =
+                    `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--danger)">${e.message}</td></tr>`;
+            }
+        }
+
+        function renderSlots(slots, apptMap) {
+            apptMap = apptMap || {};
+            const tbody = document.getElementById('slots-tbody');
+            if (!slots || slots.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">No slots yet. Add the first slot for this location.</td></tr>';
+                return;
+            }
+            const now = new Date();
+            tbody.innerHTML = slots.map(s => {
+                const slotAppts  = apptMap[s.id] || [];
+                const inactive   = s.status === 'INACTIVE';
+                // Dynamic occupancy: is current time within any active booking?
+                const nowOccupied = !inactive && slotAppts.some(a =>
+                    new Date(a.startTime) <= now && new Date(a.endTime) >= now);
+
+                // Status badge: dynamic
+                let statusHtml;
+                if (inactive) {
+                    statusHtml = statusBadge.INACTIVE;
+                } else if (nowOccupied) {
+                    statusHtml = statusBadge.OCCUPIED;
+                } else {
+                    statusHtml = statusBadge.AVAILABLE;
+                }
+
+                // Booking schedule chips
+                const scheduleHtml = slotAppts.length === 0 ? '<span style="color:var(--text-dim);font-size:11px;">No bookings</span>'
+                    : slotAppts.map(a => {
+                        const st = new Date(a.startTime);
+                        const en = new Date(a.endTime);
+                        const dateStr = st.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+                        const timeStr = st.toTimeString().slice(0,5) + '–' + en.toTimeString().slice(0,5);
+                        const isNow   = st <= now && en >= now;
+                        return `<span style="display:inline-block;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:600;
+                                    margin:1px 2px 1px 0;
+                                    background:${isNow ? 'rgba(255,71,87,0.15)' : 'rgba(0,229,160,0.1)'};
+                                    color:${isNow ? 'var(--danger)' : 'var(--accent)'};">
+                                    ${isNow ? '● ' : ''}${dateStr} · ${timeStr}
+                                </span>`;
+                    }).join('');
+
+                const toggleLabel = inactive ? 'Activate' : 'Deactivate';
+                const toggleColor = inactive ? 'var(--accent)' : 'var(--warning)';
+                const toggleBtn = `<button class="btn btn-sm"
+                       style="background:rgba(255,176,32,0.12);color:${toggleColor};border:1px solid ${toggleColor}33;"
+                       onclick="ownerSlots.toggleSlotActive(${s.id},'${s.status}')">
+                       ${toggleLabel}
+                   </button>`;
+
+                return `
+                <tr>
+                    <td style="font-family:'DM Mono',monospace;font-weight:600">${s.slotNumber}</td>
+                    <td>${vehicleLabels[s.vehicleType] || s.vehicleType || '—'}</td>
+                    <td>${statusHtml}</td>
+                    <td style="max-width:220px;">${scheduleHtml}</td>
+                    <td style="text-align:center">
+                        <div style="display:flex;gap:4px;justify-content:center;">
+                            ${toggleBtn}
+                            <button class="btn btn-danger btn-sm" onclick="ownerSlots.deleteSlot(${s.id})">Delete</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function submitSlot() {
+            if (!selectedLocationId) return;
+            const slotNumber  = document.getElementById('slot-number').value.trim().toUpperCase();
+            const vehicleType = document.getElementById('slot-vehicle-type').value;
+            if (!slotNumber) { toast('Please enter a slot number', 'error'); return; }
+
+            // Capacity check
+            if (selectedLocationCapacity > 0 && currentSlots.length >= selectedLocationCapacity) {
+                toast(`Cannot add slot — this location has reached its maximum capacity of ${selectedLocationCapacity} slot${selectedLocationCapacity !== 1 ? 's' : ''}`, 'error');
+                return;
+            }
+
+            // Duplicate check against cached slots
+            const duplicate = currentSlots.some(s => s.slotNumber.toUpperCase() === slotNumber);
+            if (duplicate) { toast(`Slot "${slotNumber}" already exists in this location`, 'error'); return; }
+
+            try {
+                await SlotAPI.create({ slotNumber, vehicleType, status: 'AVAILABLE', locationId: selectedLocationId });
+                toast('Slot added');
+                toggleForm('slot-form');
+                document.getElementById('slot-number').value = '';
+                await loadSlots(selectedLocationId);
+                loadLocations(); // refresh available count in locations table
+            } catch (e) { toast(e.message, 'error'); }
+        }
+
+        function toggleSlotActive(id, currentStatus) {
+            const newStatus = currentStatus === 'INACTIVE' ? 'AVAILABLE' : 'INACTIVE';
+            const slot = currentSlots.find(s => s.id === id);
+            const slotLabel = slot ? `Slot ${slot.slotNumber}` : 'this slot';
+            const action = newStatus === 'AVAILABLE' ? 'Activate' : 'Deactivate';
+            const okClass = newStatus === 'AVAILABLE' ? 'btn-success' : 'btn-danger';
+            showConfirm(
+                `${action} Slot`,
+                `Are you sure you want to ${action.toLowerCase()} <strong>${slotLabel}</strong>?`,
+                async () => {
+                    try {
+                        await SlotAPI.updateStatus(id, newStatus);
+                        toast(`Slot ${newStatus === 'INACTIVE' ? 'deactivated' : 'activated'}`);
+                        await loadSlots(selectedLocationId);
+                        loadLocations();
+                    } catch (e) { toast(e.message, 'error'); }
+                },
+                { okLabel: action, okClass }
+            );
+        }
+
+        function deleteSlot(id) {
+            const slot = currentSlots.find(s => s.id === id);
+            const slotLabel = slot ? `Slot ${slot.slotNumber}` : 'this slot';
+            showConfirm(
+                'Delete Slot',
+                `Are you sure you want to permanently delete <strong>${slotLabel}</strong>? This action cannot be undone.`,
+                async () => {
+                    try {
+                        await SlotAPI.delete(id);
+                        toast('Slot deleted');
+                        await loadSlots(selectedLocationId);
+                        loadLocations();
+                    } catch (e) { toast(e.message, 'error'); }
+                }
+            );
+        }
+
+        function setMapTheme(isLight) {
+            if (map) map.setOptions({ styles: isLight ? [] : DARK_MAP_STYLES });
+        }
+
+        return { loadLocations, toggleForm, submitLocation, toggleActive, deleteLocation,
+                 editLocation, manageSlots, closeSlots, submitSlot, toggleSlotActive, deleteSlot, checkLocForm, setMapTheme };
+    })();
+
+    // ── QR Scanner ────────────────────────────────────────────────────────────
+    let html5QrScanner = null;
+
+    function startQRScanner() {
+        const reader = document.getElementById('qr-reader');
+        reader.style.display = 'block';
+        document.getElementById('btn-open-camera').style.display = 'none';
+        document.getElementById('btn-stop-camera').style.display = 'flex';
+        clearScanPanels();
+
+        html5QrScanner = new Html5Qrcode('qr-reader');
+        html5QrScanner.start(
+            { facingMode: 'environment' },
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            (decodedText) => {
+                stopQRScanner();
+                verifyAppointmentId(decodedText.trim());
+            },
+            () => {}
+        ).catch(err => {
+            showScanError('Camera error: ' + err);
+            stopQRScanner();
+        });
+    }
+
+    function stopQRScanner() {
+        if (html5QrScanner) {
+            html5QrScanner.stop().catch(() => {});
+            html5QrScanner = null;
+        }
+        document.getElementById('qr-reader').style.display = 'none';
+        document.getElementById('btn-open-camera').style.display = 'flex';
+        document.getElementById('btn-stop-camera').style.display = 'none';
+    }
+
+    function verifyByManualId() {
+        const val = document.getElementById('manual-appt-id').value.trim();
+        if (!val) { showScanError('Please enter an Appointment ID.'); return; }
+        verifyAppointmentId(val);
+    }
+
+    async function verifyAppointmentId(idStr) {
+        clearScanPanels();
+        const id = parseInt(idStr);
+        if (isNaN(id)) { showScanError('Invalid QR code — expected a numeric Appointment ID.'); return; }
+        try {
+            const a = await AppointmentAPI.getById(id);
+            showScanResult(a);
+        } catch (e) {
+            showScanError('Booking not found or could not be verified: ' + (e.message || 'Unknown error'));
+        }
+    }
+
+    function showScanResult(a) {
+        const panel = document.getElementById('scan-result-panel');
+        const start = a.startTime ? new Date(a.startTime) : null;
+        const end   = a.endTime   ? new Date(a.endTime)   : null;
+        const dateStr = start ? start.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—';
+        const timeStr = (start && end) ? start.toTimeString().slice(0,5) + '–' + end.toTimeString().slice(0,5) : '—';
+        const veh = [a.vehicleNumber, a.vehicleModel, a.vehicleColor, a.vehicleType].filter(Boolean).join(' · ') || '—';
+
+        const statusColors = { ACTIVE: 'var(--accent)', PENDING: '#f59e0b', COMPLETED: '#6b7280', REJECTED: 'var(--danger)', CANCELLED: 'var(--danger)' };
+        document.getElementById('scan-status-label').style.color = statusColors[a.status] || 'var(--accent)';
+        document.getElementById('scan-status-label').textContent = a.status || 'Verified';
+        document.getElementById('scan-booking-code').textContent = a.bookingCode || '';
+
+        document.getElementById('scan-details-grid').innerHTML = `
+            <div><span style="color:var(--text-muted)">Driver</span><br><strong>${(a.driverFirstName || '') + ' ' + (a.driverLastName || '')}</strong></div>
+            <div><span style="color:var(--text-muted)">Vehicle</span><br><strong>${veh}</strong></div>
+            <div><span style="color:var(--text-muted)">Slot</span><br><strong>${a.slotNumber || '—'}</strong></div>
+            <div><span style="color:var(--text-muted)">Location</span><br><strong>${a.locationName || '—'}</strong></div>
+            <div><span style="color:var(--text-muted)">Date</span><br><strong>${dateStr}</strong></div>
+            <div><span style="color:var(--text-muted)">Time</span><br><strong>${timeStr}</strong></div>
+            <div><span style="color:var(--text-muted)">Duration</span><br><strong>${a.duration ? (a.duration / 60).toFixed(1) + ' h' : '—'}</strong></div>
+            <div><span style="color:var(--text-muted)">Amount</span><br><strong>${a.totalAmount != null ? a.totalAmount + ' LKR' : '—'}</strong></div>
+        `;
+        panel.style.display = 'block';
+    }
+
+    function showScanError(msg) {
+        const el = document.getElementById('scan-error-panel');
+        el.textContent = '⚠ ' + msg;
+        el.style.display = 'block';
+    }
+
+    function clearScanPanels() {
+        document.getElementById('scan-result-panel').style.display = 'none';
+        document.getElementById('scan-error-panel').style.display = 'none';
+    }
+
+    // ── Earnings ──────────────────────────────────────────────────────────────
+    async function loadEarnings() {
+        const user = getCurrentUser();
+        try {
+            const txns = await TransactionAPI.getByOwnerId(user.id);
+
+            const gross      = txns.reduce((s, t) => s + t.totalAmount,  0);
+            const commission = txns.reduce((s, t) => s + t.commission,   0);
+            const net        = txns.reduce((s, t) => s + t.ownerEarning, 0);
+
+            document.getElementById('earn-gross').textContent      = fmt(gross);
+            document.getElementById('earn-commission').textContent = fmt(commission);
+            document.getElementById('earn-net').textContent        = fmt(net);
+            document.getElementById('earn-count').textContent      = txns.length;
+
+            const tbody = document.getElementById('earnings-tbody');
+            if (!txns.length) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">No transactions yet.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = txns
+                .slice()
+                .sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))
+                .map(t => {
+                    const paidDate = t.paymentDate
+                        ? new Date(t.paymentDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
+                        : '—';
+                    const paidTime = t.paymentDate
+                        ? new Date(t.paymentDate).toTimeString().slice(0, 5)
+                        : '';
+                    const driver = [t.driverFirstName, t.driverLastName].filter(Boolean).join(' ') || '—';
+                    return `<tr>
+                        <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--accent)">${t.bookingCode || '—'}</td>
+                        <td>${driver}</td>
+                        <td>${t.slotNumber || '—'}</td>
+                        <td style="font-size:12px;">${paidDate}${paidTime ? ' · ' + paidTime : ''}</td>
+                        <td style="font-family:'DM Mono',monospace;">${t.totalAmount.toFixed(2)} LKR</td>
+                        <td style="font-family:'DM Mono',monospace;color:var(--accent3);">${t.commission.toFixed(2)} LKR</td>
+                        <td style="font-family:'DM Mono',monospace;color:var(--accent);">${t.ownerEarning.toFixed(2)} LKR</td>
+                    </tr>`;
+                })
+                .join('');
+        } catch (e) {
+            console.error('Failed to load earnings', e);
+        }
+    }
