@@ -59,6 +59,22 @@ function togglePass(id, btn) {
         if (e.key === 'Escape') closeRoleModal();
     });
 
+    // Submit login on Enter when both fields are filled
+    ['loginEmail', 'loginPassword'].forEach(function (id) {
+        document.getElementById(id).addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter') return;
+            const email    = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            if (email && password) {
+                handleLogin();
+            } else if (!email) {
+                document.getElementById('loginEmail').focus();
+            } else {
+                document.getElementById('loginPassword').focus();
+            }
+        });
+    });
+
     // Show success toast if redirected after registration
     (function checkRegistered() {
         const params = new URLSearchParams(window.location.search);

@@ -1,6 +1,7 @@
 package org.example.backend.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.example.backend.dto.AuthResponseDTO;
 import org.example.backend.dto.LoginRequestDTO;
 import org.example.backend.dto.UserDTO;
 import org.example.backend.entity.User;
@@ -9,8 +10,10 @@ import org.example.backend.enums.UserStatus;
 import org.example.backend.exception.InvalidCredentialsException;
 import org.example.backend.exception.ResourceNotFoundException;
 import org.example.backend.repository.UserRepository;
+import org.example.backend.security.JwtUtil;
 import org.example.backend.service.AuthService;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -19,14 +22,16 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Override
-    public UserDTO login(LoginRequestDTO request) {
+    public AuthResponseDTO login(LoginRequestDTO request) {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("No account found with this email address"));
 
-        if (!user.getPassword().equals(request.getPassword())) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidCredentialsException("Incorrect password. Please try again");
         }
 
@@ -37,7 +42,9 @@ public class AuthServiceImpl implements AuthService {
 
         UserDTO dto = modelMapper.map(user, UserDTO.class);
         dto.setPassword(null);
-        return dto;
+
+        String token = jwtUtil.generateToken(user);
+        return new AuthResponseDTO(token, dto);
     }
 
 }

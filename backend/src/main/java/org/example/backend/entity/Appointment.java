@@ -1,9 +1,12 @@
 package org.example.backend.entity;
 
 import jakarta.persistence.*;
+import jdk.jfr.Timespan;
 import lombok.Data;
 import org.example.backend.enums.AppointmentStatus;
 import org.example.backend.enums.PaymentStatus;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 

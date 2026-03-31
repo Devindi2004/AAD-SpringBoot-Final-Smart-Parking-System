@@ -161,7 +161,28 @@
         loadLocationsOnMap();
     };
 
-    // ── Init fullMap lazily when Find Parking view is shown ────────────────────
+    // ── Base view-switcher (replaces the deleted script.js showView) ───────────
+    function showView(id, btn) {
+        document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+        if (btn) {
+            const parent = btn.closest('.nav-section') || btn.closest('aside');
+            if (parent) parent.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+            btn.classList.add('active');
+        }
+        const titles = {
+            'driver-dashboard': 'Driver Dashboard',
+            'driver-map':       'Find Parking',
+            'driver-vehicles':  'My Vehicles',
+            'driver-bookings':  'Bookings',
+            'driver-qr':        'My QR Code',
+        };
+        const titleEl = document.getElementById('topbar-title');
+        if (titleEl && titles[id]) titleEl.textContent = titles[id];
+    }
+
+    // ── Extend showView to lazily init the Google Maps fullMap ─────────────────
     const _origShowView = showView;
     window.showView = function (id, btn) {
         _origShowView(id, btn);
@@ -995,6 +1016,13 @@
 
     // Load dashboard on startup
     loadDriverDashboard();
+
+    // ── Logout confirmation ────────────────────────────────────────────────────
+    function confirmLogout() {
+        showConfirm('Log Out', 'Are you sure you want to log out of ParkSmart?', logout, {
+            okLabel: 'Log Out', okClass: 'btn-danger', icon: '🚪', iconBg: 'rgba(255,71,87,0.15)'
+        });
+    }
 
     // ── Confirm Modal ─────────────────────────────────────────────────────────
     function showConfirm(title, message, onConfirm, { okLabel = 'Confirm', okClass = 'btn-danger', iconBg = 'rgba(255,71,87,0.15)', icon = '⚠️' } = {}) {

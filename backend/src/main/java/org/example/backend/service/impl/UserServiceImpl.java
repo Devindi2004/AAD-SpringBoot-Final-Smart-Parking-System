@@ -11,6 +11,7 @@ import org.example.backend.repository.OwnerVerificationRepository;
 import org.example.backend.repository.UserRepository;
 import org.example.backend.service.UserService;
 import org.modelmapper.ModelMapper;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +26,13 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final OwnerVerificationRepository ownerVerificationRepository;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public UserDTO saveUser(UserDTO dto) {
         User user = modelMapper.map(dto, User.class);
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
         // Owners must wait for admin approval — force INACTIVE on registration
         if (user.getRole() == UserRole.OWNER) {

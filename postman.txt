@@ -1,0 +1,11 @@
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "Admin",
+    "lastName": "User",
+    "email": "admin@parksmart.com",
+    "phone": "0771234567",
+    "password": "Admin@123",
+    "role": "ADMIN",
+    "status": "ACTIVE"
+  }'

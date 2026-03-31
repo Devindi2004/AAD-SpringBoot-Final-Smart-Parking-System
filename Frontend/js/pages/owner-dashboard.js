@@ -278,7 +278,50 @@
         setTimeout(() => el.remove(), 3000);
     }
 
-    // ── Intercept showView to load locations when tab opens ───────────────────
+    // ── Logout confirmation ────────────────────────────────────────────────────
+    window.confirmLogout = function () {
+        document.getElementById('confirm-title').textContent = 'Log Out';
+        document.getElementById('confirm-msg').textContent   = 'Are you sure you want to log out of ParkSmart?';
+        const modal     = document.getElementById('confirm-modal');
+        const okBtn     = document.getElementById('confirm-ok-btn');
+        const cancelBtn = document.getElementById('confirm-cancel-btn');
+        okBtn.textContent = 'Log Out';
+        okBtn.className   = 'btn btn-danger';
+        okBtn.style.flex  = '1';
+        modal.classList.add('open');
+        function close() {
+            modal.classList.remove('open');
+            okBtn.removeEventListener('click', handleOk);
+            cancelBtn.removeEventListener('click', handleCancel);
+        }
+        function handleOk()     { close(); logout(); }
+        function handleCancel() { close(); }
+        okBtn.addEventListener('click',     handleOk,     { once: true });
+        cancelBtn.addEventListener('click', handleCancel, { once: true });
+    };
+
+    // ── Base view-switcher (replaces the deleted script.js showView) ───────────
+    window.showView = function (id, btn) {
+        document.querySelectorAll('.view').forEach(function (v) { v.classList.remove('active'); });
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+        if (btn) {
+            const parent = btn.closest('.nav-section') || btn.closest('aside');
+            if (parent) parent.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+            btn.classList.add('active');
+        }
+        const titles = {
+            'owner-dashboard': 'Owner Dashboard',
+            'owner-slots':     'Parking Slots',
+            'owner-requests':  'Booking Requests',
+            'owner-earnings':  'Earnings',
+            'owner-scan':      'Scan QR',
+        };
+        const titleEl = document.getElementById('topbar-title');
+        if (titleEl && titles[id]) titleEl.textContent = titles[id];
+    };
+
+    // ── Intercept showView to load data when tab opens ────────────────────────
     (function () {
         const _orig = window.showView;
         window.showView = function (id, btn) {

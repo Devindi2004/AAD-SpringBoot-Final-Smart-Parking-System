@@ -15,15 +15,26 @@ const API_BASE = 'http://localhost:8080';
  * @returns {Promise<any>}    parsed JSON response, or null for 204 No Content
  */
 async function apiFetch(endpoint, options = {}) {
+    const token = sessionStorage.getItem('token');
+
     const config = {
         headers: {
             'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
             ...options.headers,
         },
         ...options,
     };
 
     const response = await fetch(`${API_BASE}${endpoint}`, config);
+
+    // Token expired or invalid — force logout
+    if (response.status === 401) {
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('currentUser');
+        window.location.href = window.location.pathname.includes('/pages/') ? '../index.html' : 'index.html';
+        return;
+    }
 
     // 204 No Content (e.g. DELETE) — nothing to parse
     if (response.status === 204 || response.headers.get('content-length') === '0') {

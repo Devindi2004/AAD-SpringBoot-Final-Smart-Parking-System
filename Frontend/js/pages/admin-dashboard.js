@@ -185,6 +185,13 @@ function renderUsersTable() {
     }).join('');
 }
 
+// ── LOGOUT CONFIRMATION ────────────────────────────────────────────────────────
+function confirmLogout() {
+    showConfirm('Log Out', 'Are you sure you want to log out of ParkSmart?', logout, {
+        okLabel: 'Log Out', okClass: 'btn-danger', icon: '🚪', iconBg: 'rgba(255,71,87,0.15)'
+    });
+}
+
 // ── CONFIRM MODAL ─────────────────────────────────────────────────────────────
 function showConfirm(title, message, onConfirm, { okLabel = 'Confirm', okClass = 'btn-danger', iconBg = 'rgba(255,71,87,0.15)', icon = '⚠️' } = {}) {
     const modal  = document.getElementById('confirm-modal');
